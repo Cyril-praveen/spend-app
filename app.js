@@ -114,13 +114,14 @@
     el.append(h('span', 'arrow', c > 0 ? '▲' : '▼'), document.createTextNode(' ' + pct(c) + ' vs ' + money(row.prev_total) + ' before'));
   });
 
-  // 14-day bar chart. Touch or hover a bar to read the day.
+  // 14-day line graph with the daily average drawn as a dashed line. Touch or hover a day to read it.
+  // The note above the graph says how much is left to spend today to stay at or under the average.
   dash.draw('days', (el) => {
     const st = stateOf(['by_day']);
     el.replaceChildren();
     el.classList.toggle('is-loading', st === 'loading');
     const scrub = el.parentElement.querySelector('.scrub');
-    const rest = 'Touch a bar to see a day';
+    const rest = 'Touch the line to see a day';
     if (scrub) scrub.textContent = rest;
     if (st === 'error') {
       el.append(failLine());
@@ -129,6 +130,8 @@
     if (st !== 'ok') return;
     const data = rowsOf('by_day');
     const byDay = new Map(data.map((r) => [r.day, r]));
+    const kpi = kpiRow();
+    const avg = kpi && typeof kpi.per_day === 'number' && kpi.per_day > 0 ? kpi.per_day : 0;
     const today = d3.timeDay.floor(new Date());
     let first = d3.timeDay.offset(today, -14);
     let last = today;
@@ -139,40 +142,79 @@
       if (d > last) last = d;
     });
     const days = d3.timeDay.range(first, d3.timeDay.offset(last, 1));
-    const W = Math.max(el.clientWidth, 260);
-    const H = 112;
-    const top = 6;
-    const bottom = 20;
     const amountOf = (d) => Math.max(0, (byDay.get(dayKey(d)) || {}).amount || 0);
-    const y = d3.scaleLinear([0, d3.max(days, amountOf) || 1], [H - bottom, top]);
-    const x = d3.scaleBand(days.map(dayKey), [0, W]).paddingInner(0.34).paddingOuter(0.05);
-    const bw = Math.min(x.bandwidth(), 22);
-    const off = (x.bandwidth() - bw) / 2;
-    const svg = d3.select(el).append('svg').attr('class', 'bars-svg').attr('width', '100%').attr('viewBox', '0 0 ' + W + ' ' + H).attr('role', 'img').attr('aria-label', 'Spending for each of the last two weeks');
-    const barH = (d) => (amountOf(d) > 0 ? Math.max(5, y(0) - y(amountOf(d))) : 4);
-    const bars = svg.append('g').selectAll('rect').data(days).join('rect')
-      .attr('class', (d) => (amountOf(d) > 0 ? 'bar' : 'bar zero'))
-      .attr('x', (d) => x(dayKey(d)) + off)
-      .attr('width', bw)
-      .attr('y', (d) => y(0) - barH(d))
-      .attr('height', barH)
-      .attr('rx', Math.min(6, bw / 2));
+
+    if (avg > 0) {
+      const spent = amountOf(today);
+      const left = Math.round((avg - spent) * 100) / 100;
+      const note = h('div', 'avg-note ' + (left >= 0 ? 'under' : 'over'));
+      note.append(
+        h('span', 'avg-big', left >= 0 ? money(left) + ' left today' : money(-left) + ' over today'),
+        h('span', 'avg-small', (spent > 0 ? money(spent) + ' spent so far' : 'Nothing spent yet') + ' · ' + money(avg) + ' daily average')
+      );
+      el.append(note);
+    }
+
+    const W = Math.max(el.clientWidth, 260);
+    const H = 150;
+    const top = 14;
+    const bottom = 20;
+    const plotEnd = W - 54; // the strip to the right of this holds the average label
+    const maxV = Math.max(d3.max(days, amountOf) || 0, avg) || 1;
+    const y = d3.scaleLinear([0, maxV * 1.12], [H - bottom, top]);
+    const x = d3.scalePoint(days.map(dayKey), [10, plotEnd - 4]);
+    const px = (d) => x(dayKey(d));
+    const svg = d3.select(el).append('svg').attr('class', 'line-svg').attr('width', '100%').attr('viewBox', '0 0 ' + W + ' ' + H).attr('role', 'img')
+      .attr('aria-label', 'Spending for each of the last two weeks' + (avg > 0 ? ', with the daily average of ' + money(avg) : ''));
+
+    const grad = svg.append('defs').append('linearGradient').attr('id', 'sp-area').attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+    grad.append('stop').attr('offset', '0%').attr('class', 'grad-top');
+    grad.append('stop').attr('offset', '100%').attr('class', 'grad-bot');
+
+    svg.append('line').attr('class', 'base').attr('x1', 0).attr('x2', plotEnd).attr('y1', y(0)).attr('y2', y(0));
+    svg.append('path').attr('class', 'area').attr('fill', 'url(#sp-area)')
+      .attr('d', d3.area().x(px).y0(y(0)).y1((d) => y(amountOf(d))).curve(d3.curveMonotoneX)(days));
+    svg.append('path').attr('class', 'line')
+      .attr('d', d3.line().x(px).y((d) => y(amountOf(d))).curve(d3.curveMonotoneX)(days));
+
+    if (avg > 0) {
+      const ay = y(avg);
+      svg.append('line').attr('class', 'avg-line').attr('x1', 0).attr('x2', plotEnd).attr('y1', ay).attr('y2', ay);
+      // The label sits in the strip at the end of the dashed line, clear of the data.
+      const ly = Math.min(ay, y(0) - 12);
+      svg.append('text').attr('class', 'avg-label').attr('x', plotEnd + 5).attr('y', ly - 3).text('Daily avg');
+      svg.append('text').attr('class', 'avg-label avg-amt').attr('x', plotEnd + 5).attr('y', ly + 11).text(money(avg));
+    }
+
+    const guide = svg.append('line').attr('class', 'guide').attr('y1', top - 4).attr('y2', y(0)).attr('visibility', 'hidden');
+    const radius = (d) => (d.getTime() === today.getTime() ? 5.5 : amountOf(d) > 0 ? 3.8 : 2.6);
+    const dots = svg.append('g').selectAll('circle').data(days).join('circle')
+      .attr('class', (d) => 'dot' + (amountOf(d) === 0 ? ' zero' : '') + (avg > 0 && amountOf(d) > avg ? ' over' : '') + (d.getTime() === today.getTime() ? ' today' : ''))
+      .attr('cx', px)
+      .attr('cy', (d) => y(amountOf(d)))
+      .attr('r', radius);
+
     const axis = svg.append('g').attr('class', 'bars-axis');
     axis.append('text').attr('x', 2).attr('y', H - 4).attr('text-anchor', 'start').text(dayShort(days[0]));
-    axis.append('text').attr('x', W - 2).attr('y', H - 4).attr('text-anchor', 'end').text('Today');
+    axis.append('text').attr('x', plotEnd + 6).attr('y', H - 4).attr('text-anchor', 'end').text('Today');
+
     const show = (event, d) => {
       const rec = byDay.get(dayKey(d));
       if (scrub) {
-        scrub.textContent = dayLong(d) + ' · ' + (rec ? money(rec.amount) + ' · ' + rec.count + (rec.count === 1 ? ' purchase' : ' purchases') : 'no spending');
+        const diff = avg > 0 ? amountOf(d) - avg : 0;
+        scrub.textContent = dayLong(d) + ' · ' + (rec ? money(rec.amount) + ' · ' + rec.count + (rec.count === 1 ? ' purchase' : ' purchases') : 'no spending') +
+          (avg > 0 ? ' · ' + money(Math.abs(diff)) + (diff <= 0 ? ' under' : ' over') + ' avg' : '');
       }
-      bars.classed('dim', (b) => b !== d);
+      guide.attr('x1', px(d)).attr('x2', px(d)).attr('visibility', 'visible');
+      dots.attr('r', (p) => (p === d ? radius(p) + 2 : radius(p)));
     };
     const hide = () => {
       if (scrub) scrub.textContent = rest;
-      bars.classed('dim', false);
+      guide.attr('visibility', 'hidden');
+      dots.attr('r', radius);
     };
     svg.append('g').selectAll('rect').data(days).join('rect')
-      .attr('x', (d) => x(dayKey(d)) - (x.step() - x.bandwidth()) / 2)
+      .attr('x', (d) => px(d) - x.step() / 2)
       .attr('width', x.step())
       .attr('y', 0)
       .attr('height', H - bottom)
