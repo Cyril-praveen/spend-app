@@ -8,202 +8,225 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Spending">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#faf9f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1d1c1a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0e10" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>My spending</title>
 <style>
-.sp { display: grid; gap: var(--cds-gap-lg); max-width: 64rem; margin-inline: auto; font-family: var(--font-sans); color: var(--color-fg); }
-.sp * { box-sizing: border-box; }
-.sp-head { display: grid; gap: var(--cds-gap-sm); }
-.sp-headrow { display: flex; align-items: center; justify-content: space-between; gap: var(--cds-gap-md); }
-.sp .sp-title { margin: 0; font-family: var(--font-serif); font-weight: 400; font-size: var(--cds-font-size-title); line-height: 1.2; }
-.sp .sp-refresh { font: inherit; font-size: var(--cds-font-size-body); color: var(--color-fg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-md); cursor: pointer; }
-.sp .sp-refresh:disabled { opacity: .5; cursor: default; }
-.sp .sp-take { margin: 0; font-size: var(--cds-font-size-heading); line-height: 1.45; }
-.sp .sp-take b { font-weight: var(--cds-font-weight-medium); }
-.sp .sp-take [data-dash-source-state=empty] { color: transparent; }
-.sp .sp-note { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.sp .sp-msg { margin: 0; padding: var(--cds-pad-md) var(--cds-pad-lg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); font-size: var(--cds-font-size-body); }
-.sp .sp-msg[hidden], .sp [hidden] { display: none; }
-.sp-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); gap: var(--cds-gap-md); }
-.sp-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-xs); align-content: start; }
-.sp-lab { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.sp-big { font-family: var(--font-serif); font-weight: 400; font-size: var(--cds-font-size-title); line-height: 1.15; font-variant-numeric: tabular-nums; }
-.sp-small { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
-.sp-up { color: var(--color-warn); }
-.sp-down { color: var(--color-ok); }
-.sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
-.sp-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-sm); align-content: start; container-type: inline-size; min-width: 0; }
-.sp .sp-h { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
-.sp .sp-sub { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.sp-cats { display: grid; gap: var(--cds-gap-md); min-height: 12rem; align-content: start; }
-.sp-cat { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--cds-gap-sm); font-size: var(--cds-font-size-body); }
-.sp-cat-amt { font-variant-numeric: tabular-nums; }
-.sp-cat-track { grid-column: 1 / -1; height: .5rem; border-radius: 99px; background: var(--cds-chart-grid); overflow: hidden; }
-.sp-cat-fill { height: 100%; border-radius: 99px; }
-.sp-cat-meta { grid-column: 1 / -1; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.sp-chart { position: relative; min-height: 210px; }
-.sp-chart svg { display: block; }
-.sp-axis text { font-family: var(--font-sans); font-size: var(--cds-font-size-caption); fill: var(--color-fg-muted); }
-.sp-tip { position: absolute; z-index: 2; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.sp-tip-day { color: var(--cds-text-secondary); }
-.sp-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-body); }
-.sp-table th { text-align: left; font-weight: 400; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
-.sp-table td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--cds-chart-grid); overflow-wrap: anywhere; }
-.sp-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sp-table .sp-when { color: var(--color-fg-muted); white-space: nowrap; font-size: var(--cds-font-size-caption); }
-.sp-fail { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 4rem; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
-.sp-dot { width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
-.sp-details { font-size: var(--cds-font-size-body); }
-.sp-details summary { cursor: pointer; color: var(--color-fg-muted); }
-.sp-details dl { margin: var(--cds-gap-sm) 0 0; display: grid; gap: var(--cds-gap-sm); }
-.sp-details dt { font-weight: var(--cds-font-weight-medium); }
-.sp-details dd { margin: 0; color: var(--color-fg-muted); }
-[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
-@container (max-width: 30rem) { .sp-hide-narrow { display: none; } }
-
 :root {
   color-scheme: light dark;
+  --bg: #f3f2ee; --card: #ffffff; --fg: #17171a; --muted: #75757c; --line: rgba(0, 0, 0, .07); --track: rgba(0, 0, 0, .06);
   --accent: #1f6f55;
-  --color-fg: #1f1e1d; --color-fg-muted: #6b6a68; --color-bg: #faf9f5; --color-panel: #ffffff; --color-border-line: #e5e3dc;
-  --color-ok: #2f7a4f; --color-warn: #b4531e; --color-bad: #b3261e;
-  --cds-radius: 14px;
-  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 18px;
-  --cds-pad-xs: 6px; --cds-pad-sm: 10px; --cds-pad-md: 14px; --cds-pad-lg: 18px;
-  --cds-font-size-caption: 12.5px; --cds-font-size-body: 15px; --cds-font-size-heading: 17px; --cds-font-size-title: 30px;
-  --cds-font-weight-medium: 600;
-  --cds-chart-grid: rgba(0, 0, 0, .08); --cds-chart-axis: rgba(0, 0, 0, .3); --cds-chart-muted: #c9c6bb;
-  --cds-surface-popover: #ffffff; --cds-border: #d8d5cc; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .14); --cds-text-secondary: #6b6a68;
-  --cds-dur-slow: .3s;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
-  --font-serif: 'New York', ui-serif, Georgia, 'Times New Roman', serif;
+  --up: #c4452c; --up-bg: rgba(196, 69, 44, .12); --down: #1a8a5a; --down-bg: rgba(26, 138, 90, .13);
+  --shadow: 0 1px 2px rgba(20, 20, 30, .04), 0 8px 24px rgba(20, 20, 30, .06);
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
+  --radius: 22px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
+    --bg: #0e0e10; --card: #19191c; --fg: #f4f4f6; --muted: #9a9aa2; --line: rgba(255, 255, 255, .08); --track: rgba(255, 255, 255, .09);
     --accent: #4fb28f;
-    --color-fg: #f1efe8; --color-fg-muted: #a09d94; --color-bg: #1d1c1a; --color-panel: #272623; --color-border-line: #3a3935;
-    --color-ok: #6fcf97; --color-warn: #f0a15f; --color-bad: #f2736b;
-    --cds-chart-grid: rgba(255, 255, 255, .09); --cds-chart-axis: rgba(255, 255, 255, .3); --cds-chart-muted: #5a5850;
-    --cds-surface-popover: #302f2b; --cds-border: #45433e; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .5); --cds-text-secondary: #a09d94;
+    --up: #ff8a70; --up-bg: rgba(255, 138, 112, .15); --down: #5fd39b; --down-bg: rgba(95, 211, 155, .15);
+    --shadow: none;
   }
 }
-* { -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-sans); }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.35; }
 [hidden] { display: none !important; }
-.page { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); max-width: 64rem; margin-inline: auto; }
-.sp-setup { display: grid; gap: var(--cds-gap-md); max-width: 28rem; margin: 8vh auto 0; }
-.sp-setup .sp-title { margin: 0; font-family: var(--font-serif); font-weight: 400; font-size: var(--cds-font-size-title); }
-.sp-setup .sp-sub { margin: 0; font-size: var(--cds-font-size-body); color: var(--color-fg-muted); }
-.sp-field { display: grid; gap: 4px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.sp-field input { font: inherit; font-size: 16px; color: var(--color-fg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: 12px 14px; width: 100%; }
-.sp-primary { font: inherit; font-size: var(--cds-font-size-body); font-weight: 600; color: #fff; background: var(--accent); border: 0; border-radius: var(--cds-radius); padding: 13px 16px; cursor: pointer; }
-.sp-primary:disabled { opacity: .6; }
-.sp-secondary { font: inherit; font-size: var(--cds-font-size-body); color: var(--color-fg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: 10px 14px; cursor: pointer; margin-top: 8px; }
-.sp-details .sp-sub { margin: 8px 0 0; }
+button { font: inherit; color: inherit; }
+.page { max-width: 34rem; margin-inline: auto; padding: 0 max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.stack { display: grid; gap: 14px; }
+.muted { color: var(--muted); }
+
+/* Header */
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: max(14px, env(safe-area-inset-top)) 0 10px; margin-bottom: 4px; background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.top h1 { margin: 0; font-size: 32px; line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
+.top p { margin: 3px 0 0; font-size: 13px; color: var(--muted); min-height: 1.1em; }
+.icon-btn { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--card); color: var(--fg); box-shadow: var(--shadow); cursor: pointer; }
+.icon-btn:disabled { color: var(--muted); cursor: default; }
+.icon-btn.spin svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Cards */
+.card { background: var(--card); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { margin: 0 0 2px; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.card .sub { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+.msg { margin: 0 0 14px; padding: 13px 16px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow); font-size: 14.5px; }
+
+/* Hero */
+.hero { background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--card)), var(--card) 62%); padding-bottom: 14px; }
+.hero-label { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .02em; text-transform: uppercase; }
+.hero-amt { margin-top: 6px; font-size: 52px; line-height: 1; font-weight: 800; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.hero-amt .cents { font-size: 28px; font-weight: 700; color: var(--muted); letter-spacing: -.01em; }
+.hero-sub { margin-top: 8px; font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pill { display: inline-flex; align-items: center; gap: 2px; margin-top: 12px; padding: 6px 12px; border-radius: 99px; font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pill.up { color: var(--up); background: var(--up-bg); }
+.pill.down { color: var(--down); background: var(--down-bg); }
+.pill.flat { color: var(--muted); background: var(--track); }
+.pill .arrow { font-size: 10px; }
+.bars { margin-top: 16px; }
+.bars [data-draw] { min-height: 112px; }
+.bars-svg { display: block; touch-action: pan-y; }
+.bar { fill: var(--accent); transition: opacity .15s; }
+.bar.zero { fill: var(--track); }
+.bar.dim { opacity: .3; }
+.bars-axis text { font-family: var(--font); font-size: 11.5px; fill: var(--muted); }
+.scrub { margin: 4px 0 0; min-height: 1.3em; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Rows used by categories, merchants and purchases */
+.chip { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 14px; font-size: 20px; line-height: 1; background: color-mix(in srgb, var(--c) 17%, transparent); }
+.chip.letter { color: var(--c); font-size: 17px; font-weight: 800; border-radius: 50%; }
+.cat, .merch, .tx { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 0; text-align: left; }
+.cat { background: none; border: 0; cursor: pointer; border-radius: 14px; }
+.cat.on { background: color-mix(in srgb, var(--accent) 11%, transparent); margin-inline: -8px; padding-inline: 8px; width: calc(100% + 16px); }
+.cat-mid { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.cat-name { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-sub { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cat-amt { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cat-amt.in { color: var(--down); }
+.up-text { color: var(--up); font-weight: 600; }
+.down-text { color: var(--down); font-weight: 600; }
+.seg { display: flex; gap: 3px; height: 14px; margin-bottom: 8px; }
+.seg-part { flex: 1 1 0; min-width: 6px; background: var(--c); border-radius: 99px; transition: opacity .15s; }
+.seg-part.dim { opacity: .25; }
+.merch-track { display: block; height: 5px; margin-top: 5px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.merch-fill { display: block; height: 100%; border-radius: 99px; background: var(--c); }
+
+/* Ways to cut back */
+.tip { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-top: 1px solid var(--line); }
+.tip:first-child { border-top: 0; padding-top: 2px; }
+.tip-icon { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; background: var(--track); font-size: 16px; }
+.tip-text { margin: 0; font-size: 15px; line-height: 1.4; }
+
+/* Purchases */
+.day-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-bottom: 4px; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--line); }
+.day-head:first-child { margin-top: 0; }
+.day-total { font-variant-numeric: tabular-nums; }
+.filter { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 11%, transparent); font-size: 14px; font-weight: 600; }
+.link { border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; padding: 2px 4px; }
+.more { display: block; width: 100%; margin-top: 12px; padding: 12px; border: 0; border-radius: 14px; background: var(--track); font-weight: 600; cursor: pointer; }
+.empty-line { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+
+/* Loading and failure */
+.is-loading { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
+.sp-fail { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 4rem; color: var(--muted); font-size: 13px; }
+.sp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--up); }
+
+/* Footer */
+.foot { margin-top: 18px; display: grid; gap: 10px; }
+.foot details { background: var(--card); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); font-size: 14.5px; }
+.foot summary { cursor: pointer; font-weight: 600; }
+.foot dl { margin: 10px 0 0; display: grid; gap: 8px; }
+.foot dt { font-weight: 600; }
+.foot dd { margin: 0; color: var(--muted); }
+.foot p { margin: 10px 0 0; color: var(--muted); }
+.btn-plain { margin-top: 10px; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--track); font-weight: 600; cursor: pointer; }
+
+/* Setup */
+.setup { display: grid; gap: 14px; max-width: 26rem; margin: 9vh auto 0; }
+.setup .logo { width: 64px; height: 64px; border-radius: 16px; }
+.setup h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.025em; }
+.setup p { margin: 0; color: var(--muted); font-size: 15px; }
+.field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.field input { font: inherit; font-size: 16px; font-weight: 400; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; width: 100%; }
+.primary { padding: 14px 16px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; }
+.primary:disabled { opacity: .6; }
+.setup .msg { margin: 0; }
+
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .is-loading, .icon-btn.spin svg { animation: none; } .bar, .seg-part { transition: none; } }
 </style>
 </head>
 <body>
 <div class="page">
-<section class='sp-setup' id='setup' hidden>
-  <h1 class='sp-title'>My spending</h1>
-  <p class='sp-sub'>Connect your private spending repository. Paste the GitHub token you made for it. It is saved only on this phone.</p>
-  <label class='sp-field'><span>Repository</span><input id='repo' value='Cyril-praveen/spend-data' autocapitalize='off' autocorrect='off' spellcheck='false'></label>
-  <label class='sp-field'><span>Token</span><input id='token' type='password' autocomplete='off' autocapitalize='off' autocorrect='off' spellcheck='false' placeholder='github_pat_...'></label>
-  <button type='button' class='sp-primary' id='save'>Save and load</button>
-  <p class='sp-msg' id='setup-error' hidden></p>
+<section class="setup" id="setup" hidden>
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1f6f55"/><rect x="14" y="34" width="9" height="16" rx="4.5" fill="#f6f1e4"/><rect x="27.5" y="22" width="9" height="28" rx="4.5" fill="#f6f1e4"/><rect x="41" y="12" width="9" height="38" rx="4.5" fill="#f6f1e4"/></svg>
+  <h1>My spending</h1>
+  <p>Connect your private spending repository. Paste the GitHub token you made for it. It is saved only on this phone.</p>
+  <label class="field"><span>Repository</span><input id="repo" value="Cyril-praveen/spend-data" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+  <label class="field"><span>Token</span><input id="token" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="github_pat_..."></label>
+  <button type="button" class="primary" id="save">Save and load</button>
+  <p class="msg" id="setup-error" hidden></p>
 </section>
+
 <div id="app" hidden>
-<div class='sp'>
-  <header class='sp-head'>
-    <div class='sp-headrow'>
-      <h1 class='sp-title'>My spending</h1>
-      <button type='button' class='sp-refresh'>Refresh</button>
+  <header class="top">
+    <div>
+      <h1>Spending</h1>
+      <p id="updated"></p>
     </div>
-    <p class='sp-take sp-js-take' id='takeaway'><b data-draw='t_top'>—</b> is your biggest category: <b data-draw='t_topamt'>—</b>, or <b data-draw='t_topshare'>—</b> of the <b data-draw='t_total'>—</b> you spent in the last two weeks.</p>
-    <p class='sp-note' id='updated'></p>
-    <p class='sp-note'>Apple Pay purchases from the last two weeks. Updates when you open it, every hour while it is open, or when you tap Refresh.</p>
+    <button type="button" class="icon-btn sp-refresh" aria-label="Refresh">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
+    </button>
   </header>
 
-  <p class='sp-msg' id='load-error' hidden>Could not load your purchases from GitHub. Check your connection and tap Refresh.</p>
-  <p class='sp-msg sp-js-connect' hidden>GitHub refused the saved token or repository. Open Settings at the bottom, forget the token and enter a new one.</p>
-  <p class='sp-msg sp-js-empty' hidden>No purchases in the last two weeks yet. Purchases your phone sends after an Apple Pay payment show up here.</p>
+  <p class="msg" id="load-error" hidden>Could not load your purchases from GitHub. Check your connection and tap the refresh button.</p>
+  <p class="msg sp-js-connect" hidden>GitHub refused the saved token or repository. Open Settings at the bottom, forget the token and enter a new one.</p>
+  <p class="msg sp-js-empty" hidden>No purchases in the last two weeks yet. Purchases your phone sends after an Apple Pay payment show up here.</p>
 
-  <section class='sp-tiles' id='headline' aria-label='Last two weeks at a glance'>
-    <div class='sp-tile'>
-      <div class='sp-lab'>Spent</div>
-      <div class='sp-big' data-draw='v_total'>—</div>
-      <div class='sp-small'>last two weeks</div>
-    </div>
-    <div class='sp-tile'>
-      <div class='sp-lab'>Per day</div>
-      <div class='sp-big' data-draw='v_perday'>—</div>
-      <div class='sp-small'>average</div>
-    </div>
-    <div class='sp-tile'>
-      <div class='sp-lab'>Purchases</div>
-      <div class='sp-big' data-draw='v_count'>—</div>
-      <div class='sp-small'><span data-draw='v_other'>—</span> without a category</div>
-    </div>
-    <div class='sp-tile'>
-      <div class='sp-lab'>Change</div>
-      <div class='sp-big' data-draw='v_change'>—</div>
-      <div class='sp-small'>vs <span data-draw='v_prev'>—</span> the two weeks before</div>
-    </div>
-  </section>
+  <div class="stack">
+    <section class="card hero" id="headline" aria-label="Last two weeks at a glance">
+      <div class="hero-label">Last 14 days</div>
+      <div class="hero-amt" data-draw="h_amt">—</div>
+      <div class="hero-sub" data-draw="h_sub">—</div>
+      <div class="pill" data-draw="h_pill" hidden></div>
+      <div class="bars sp-js-full">
+        <div data-draw="days"></div>
+        <p class="scrub" aria-live="polite"></p>
+      </div>
+    </section>
 
-  <div class='sp-grid sp-js-full' id='breakdown'>
-    <section class='sp-card' id='by-category'>
-      <h2 class='sp-h'>Where it went</h2>
-      <p class='sp-sub'>Last two weeks by category, with the change from the two weeks before.</p>
-      <div class='sp-cats' data-draw='cats'></div>
+    <section class="card sp-js-full" id="by-category">
+      <h2>Categories</h2>
+      <p class="sub">Tap one to see just those purchases.</p>
+      <div class="seg" data-draw="seg" aria-hidden="true"></div>
+      <div data-draw="cats"></div>
     </section>
-    <section class='sp-card' id='by-day'>
-      <h2 class='sp-h'>Day by day</h2>
-      <p class='sp-sub'>What you spent on each day of the last two weeks.</p>
-      <div class='sp-chart' data-draw='days'></div>
+
+    <section class="card sp-js-full" id="tips-card">
+      <h2>Ways to cut back</h2>
+      <p class="sub">Worked out from your own numbers.</p>
+      <div data-draw="tips"></div>
     </section>
-    <section class='sp-card' id='top-merchants'>
-      <h2 class='sp-h'>Biggest merchants</h2>
-      <p class='sp-sub'>Where the most money went in the last two weeks.</p>
-      <table class='sp-table'>
-        <thead><tr><th>Merchant</th><th class='num'>Purchases</th><th class='num'>Spent</th></tr></thead>
-        <tbody data-draw='merch_rows'></tbody>
-      </table>
+
+    <section class="card sp-js-full" id="top-merchants">
+      <h2>Biggest merchants</h2>
+      <p class="sub">Where the most money went.</p>
+      <div data-draw="merch"></div>
     </section>
-    <section class='sp-card' id='latest'>
-      <h2 class='sp-h'>Latest purchases</h2>
-      <p class='sp-sub'>The most recent ones, newest first.</p>
-      <table class='sp-table'>
-        <thead><tr><th>When</th><th>Merchant</th><th class='sp-hide-narrow'>Category</th><th class='num'>Amount</th></tr></thead>
-        <tbody data-draw='recent_rows'></tbody>
-      </table>
+
+    <section class="card sp-js-full" id="latest">
+      <h2>Purchases</h2>
+      <p class="sub">Newest first.</p>
+      <div data-draw="tx"></div>
     </section>
   </div>
 
-  <details class='sp-details sp-js-full'>
-    <summary>How this is worked out</summary>
-    <dl>
-      <dt>Purchases</dt>
-      <dd>Each purchase your phone sends after an Apple Pay payment, tap or online, saved in your private spending repository on GitHub.</dd>
-      <dt>Duplicates</dt>
-      <dd>A tap email and a Wallet notification for the same amount within ten minutes count once.</dd>
-      <dt>Categories</dt>
-      <dd>Matched from the merchant name first. If that isn't recognised, the category your phone picked is used. Anything else is Other.</dd>
-      <dt>Refunds</dt>
-      <dd>Counted as negative spending, so they lower the totals.</dd>
-      <dt>Left out</dt>
-      <dd>Declined payments, test emails with no amount, and anything not paid with Apple Pay.</dd>
-    </dl>
-  </details>
-  <details class='sp-details'>
-    <summary>Settings</summary>
-    <p class='sp-sub'>The token that lets this app read your private spending repository is saved only on this phone.</p>
-    <button type='button' class='sp-secondary' id='forget'>Forget the token on this phone</button>
-  </details>
-</div>
+  <div class="foot">
+    <details class="sp-js-full">
+      <summary>How this is worked out</summary>
+      <dl>
+        <dt>Purchases</dt>
+        <dd>Each purchase your phone sends after an Apple Pay payment, tap or online, saved in your private spending repository on GitHub.</dd>
+        <dt>Duplicates</dt>
+        <dd>A tap and a Wallet notification for the same amount within ten minutes count once.</dd>
+        <dt>Categories</dt>
+        <dd>Matched from the merchant name first. If that isn't recognised, the category your phone picked is used. Anything else is Other.</dd>
+        <dt>Refunds</dt>
+        <dd>Counted as negative spending, so they lower the totals.</dd>
+        <dt>Left out</dt>
+        <dd>Declined payments, test entries with no amount, and anything not paid with Apple Pay.</dd>
+      </dl>
+    </details>
+    <details>
+      <summary>Settings</summary>
+      <p>The token that lets this app read your private spending repository is saved only on this phone. It updates when you open it, every hour while it is open, or when you tap refresh.</p>
+      <button type="button" class="btn-plain" id="forget">Forget the token on this phone</button>
+    </details>
+  </div>
 </div>
 </div>
 <script src="vendor/d3.min.js"></script>
