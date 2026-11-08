@@ -7,13 +7,13 @@ dash.calc('spend', {
     const RULES = [
       ['Dining & Coffee', ['uber eats', 'ubereats', 'doordash', 'skipthedishes', 'skip the', 'tim hortons', 'tims', 'starbucks', 'mcdonald', 'subway', 'a&w', 'harvey', 'wendy', 'burger', 'pizza', 'restaurant', 'resto', 'caf', 'coffee', 'bakery', 'sushi', 'kfc', 'popeyes', 'chipotle', 'domino', 'second cup', 'boba', 'donut', 'bubble', 'grill', 'bistro', 'diner', 'pub ', 'kitchen', 'thai', 'ramen', 'shawarma', 'poutine', 'dairy queen', 'freshii', 'panera', 'taco', 'wings', 'biryani', 'chai', 'bbq', 'noodle']],
       ['Subscriptions & Software', ['netflix', 'spotify', 'apple.com/bill', 'apple services', 'icloud', 'youtube', 'disney', 'prime video', 'amazon prime', 'openai', 'chatgpt', 'anthropic', 'claude', 'github', 'adobe', 'microsoft', 'dropbox', 'notion', 'figma', 'canva', 'vercel', 'railway', 'crave', 'paramount', 'audible', 'google one', 'google play', 'patreon', 'substack', 'cursor', 'perplexity', 'linkedin']],
-      ['Groceries', ['loblaw', 'no frills', 'nofrills', 'metro', 'sobeys', 'freshco', 'food basics', 'farm boy', 'iga ', 'zehrs', 'maxi', 'provigo', 'superstore', 'costco', 't&t', 'whole foods', 'grocery', 'supermarch', 'fruiterie', 'dollarama', 'bulk barn', 'walmart supercentre', 'longos', 'adonis', 'marche']],
+      ['Groceries', ['loblaw', 'no frills', 'nofrills', 'metro', 'sobeys', 'freshco', 'food basics', 'farm boy', 'iga ', 'zehrs', 'maxi', 'provigo', 'superstore', 'costco', 't&t', 'whole foods', 'grocery', 'supermarch', 'fruiterie', 'bulk barn', 'walmart supercentre', 'longos', 'adonis', 'marche']],
       ['Transport', ['uber', 'lyft', 'presto', 'ttc ', 'stm ', 'opus', 'oc transpo', 'petro', 'shell ', 'esso ', 'pioneer', 'ultramar', 'parking', 'impark', 'green p', 'go transit', 'taxi', 'bixi', 'bike share', 'circle k', 'enterprise', 'hertz', 'avis']],
       ['Travel', ['air canada', 'westjet', 'porter', 'airbnb', 'booking.com', 'expedia', 'hotel', 'via rail', 'flair', 'marriott', 'hilton', 'hostel', 'flixbus', 'greyhound', 'airport']],
       ['Health & Personal Care', ['shoppers', 'pharmacy', 'pharmaprix', 'jean coutu', 'rexall', 'london drugs', 'dental', 'clinic', 'physio', 'goodlife', 'gym', 'fitness', 'barber', 'salon', 'haircut', 'sephora', 'spa ']],
       ['Bills & Utilities', ['hydro', 'enbridge', 'bell ', 'rogers', 'telus', 'fido', 'koodo', 'virgin ', 'freedom ', 'insurance', 'rent ', 'internet', 'videotron', 'fizz', 'public mobile', 'chatr']],
       ['Entertainment', ['cineplex', 'cinema', 'steam', 'playstation', 'xbox', 'nintendo', 'ticketmaster', 'eventbrite', 'bowling', 'arcade', 'turf', 'topgolf', 'escape room', 'karaoke']],
-      ['Shopping', ['amazon', 'amzn', 'best buy', 'canadian tire', 'winners', 'marshalls', 'h&m', 'zara', 'uniqlo', 'ikea', 'apple store', 'nike', 'shein', 'etsy', 'ebay', 'walmart', 'home depot', 'rona ', 'gap ', 'staples', 'indigo', 'lululemon', 'aliexpress', 'temu']]
+      ['Shopping', ['amazon', 'amzn', 'dollarama', 'best buy', 'canadian tire', 'winners', 'marshalls', 'h&m', 'zara', 'uniqlo', 'ikea', 'apple store', 'nike', 'shein', 'etsy', 'ebay', 'walmart', 'home depot', 'rona ', 'gap ', 'staples', 'indigo', 'lululemon', 'aliexpress', 'temu']]
     ];
     const catOf = (merchant, phone) => {
       const m = ' ' + String(merchant || '').toLowerCase().replace(new RegExp('[^a-z0-9&./]+', 'g'), ' ').trim() + ' ';
@@ -69,6 +69,7 @@ dash.calc('spend', {
         if (amount === null || new RegExp('declin', 'i').test(text)) continue;
         if (new RegExp('refund|return', 'i').test(text)) amount = -Math.abs(amount);
         merchant = r.subtitle || r.title;
+        merchant = merchant.replace(new RegExp(',\\s*[^,]+,\\s*[A-Z]{2}$'), '');
         card = r.subtitle ? r.title : '';
       } else {
         amount = money(r.amount, false);
