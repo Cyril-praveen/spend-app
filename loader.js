@@ -58,7 +58,7 @@
     const since = new Date(now - 29 * day).toISOString();
     const issues = [];
     for (let page = 1; page <= 6; page++) {
-      const url = 'https://api.github.com/repos/' + repo + '/issues?state=all&per_page=100&sort=created&direction=desc&since=' + encodeURIComponent(since) + '&page=' + page;
+      const url = 'https://api.github.com/repos/' + repo + '/issues?state=open&per_page=100&sort=created&direction=desc&since=' + encodeURIComponent(since) + '&page=' + page;
       const res = await fetch(url, { headers: headers(token), cache: 'no-store' });
       check(res);
       const items = await res.json();
