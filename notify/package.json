@@ -1,0 +1,9 @@
+{
+  "name": "spend-notify",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sends spending alerts as web push notifications. Runs inside a GitHub Action in the private data repo.",
+  "dependencies": {
+    "web-push": "4.0.0"
+  }
+}
