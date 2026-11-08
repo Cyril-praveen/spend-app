@@ -79,19 +79,20 @@ dash.calc('spend', {
       }
       if (!amount) continue;
       const ts = tsOf(r);
-      items.push({ id: r.id, src: wallet ? 'wallet' : 'tap', period: r.period, ts, day: dayOf(r, ts), merchant: String(merchant || 'Unknown').trim() || 'Unknown', card: card || '', amount: Math.round(amount * 100) / 100, phone: r.phoneCategory });
+      items.push({ id: r.id, src: wallet ? 'wallet' : 'tap', period: r.period, ts, day: dayOf(r, ts), merchant: String(merchant || 'Unknown').trim() || 'Unknown', card: card || '', amount: Math.round(amount * 100) / 100, phone: r.phoneCategory, manual: r.entry === 'manual' });
     }
     items.sort((a, b) => (a.src === b.src ? 0 : a.src === 'tap' ? -1 : 1) || a.ts - b.ts);
     const norm = (s) => String(s).toLowerCase().split(new RegExp('[^a-z0-9]+')).join('').slice(0, 4);
     const kept = [];
     for (const it of items) {
-      const dup = kept.some((k) => k.amount === it.amount && Math.abs(k.ts - it.ts) <= 600000 && (k.src !== it.src || norm(k.merchant) === norm(it.merchant)));
-      if (!dup) kept.push(it);
+      const twin = kept.find((k) => k.amount === it.amount && Math.abs(k.ts - it.ts) <= 600000 && (k.src !== it.src || norm(k.merchant) === norm(it.merchant)));
+      if (twin) twin.dupIds = (twin.dupIds || []).concat(it.id);
+      else kept.push(it);
     }
     return kept
       .map((it) => {
-        const c = catOf(it.merchant, it.phone);
-        return { id: it.id, src: it.src, period: it.period, ts: it.ts, day: it.day, merchant: it.merchant, card: it.card, amount: it.amount, category: c.cat, how: c.how };
+        const c = it.manual && CATS.includes(it.phone) ? { cat: it.phone, how: 'manual' } : catOf(it.merchant, it.phone);
+        return { id: it.id, src: it.src, period: it.period, ts: it.ts, day: it.day, merchant: it.merchant, card: it.card, amount: it.amount, category: c.cat, how: c.how, dupIds: it.dupIds || [] };
       })
       .sort((a, b) => b.ts - a.ts);
   }

@@ -3,7 +3,7 @@
   const unesc = (s) => String(s || '').split('&#39;').join("'").split('&quot;').join('"').split('&lt;').join('<').split('&gt;').join('>').split('&amp;').join('&');
   const flat = (s) => String(s || '').split(String.fromCharCode(13)).join(' ').split(String.fromCharCode(10)).join(' ');
   const fields = (t) => {
-    const re = new RegExp('(^|[ ])(Source|Date|Merchant|Amount|Card|Category|Title|Subtitle|Body):', 'g');
+    const re = new RegExp('(^|[ ])(Source|Date|Merchant|Amount|Card|Category|Title|Subtitle|Body|Entry):', 'g');
     const hits = [];
     let m;
     while ((m = re.exec(t)) !== null) hits.push({ k: m[2], s: m.index + m[0].length, e: m.index });
@@ -43,6 +43,7 @@
       phoneCategory: f.Category || '',
       title: f.Title || '',
       subtitle: f.Subtitle || '',
+      entry: (f.Entry || '').toLowerCase(),
       body: f.Body || ''
     };
   };
