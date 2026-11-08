@@ -189,6 +189,7 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
     </div>
   </header>
 
+  <p class="msg" id="offline-note" role="status" hidden></p>
   <p class="msg" id="load-error" hidden>Could not load your purchases from GitHub. Check your connection and tap the refresh button.</p>
   <p class="msg sp-js-connect" hidden>GitHub refused the saved token or repository. Open Settings at the bottom, forget the token and enter a new one.</p>
   <p class="msg sp-js-empty" hidden>No purchases in the last two weeks yet. Purchases your phone sends after an Apple Pay payment show up here.</p>
@@ -249,7 +250,7 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
     </details>
     <details>
       <summary>Settings</summary>
-      <p>The token that lets this app read your private spending repository is saved only on this phone. It updates when you open it, every hour while it is open, or when you tap refresh.</p>
+      <p>The token that lets this app read your private spending repository, and a copy of your latest purchases so the app works offline, are saved only on this phone. Forgetting the token deletes that copy. Payments you add while offline stay on the phone until they send. It updates when you open it, every hour while it is open, or when you tap refresh.</p>
       <button type="button" class="btn-plain" id="forget">Forget the token on this phone</button>
     </details>
   </div>

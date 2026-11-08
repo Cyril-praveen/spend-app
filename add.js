@@ -110,7 +110,13 @@
   };
 
   openBtn.addEventListener('click', () => openSheet(null));
-  window.spendEdit = (row) => openSheet(row);
+  window.spendEdit = (row) => {
+    if (String(row.id).indexOf('p-') === 0) {
+      showToast('Not sent yet. You can edit it once it has sent.', null);
+      return;
+    }
+    openSheet(row);
+  };
   backdrop.addEventListener('click', closeSheet);
   $('#add-cancel').addEventListener('click', closeSheet);
   document.addEventListener('keydown', (e) => {
@@ -155,7 +161,18 @@
         closeSheet();
         showToast('Saved changes to ' + name, ops);
       } else {
-        const res = await api('/issues', { method: 'POST', body: JSON.stringify({ title, body }) });
+        let res;
+        try {
+          res = await api('/issues', { method: 'POST', body: JSON.stringify({ title, body }) });
+        } catch (net) {
+          // No connection: keep it on this phone and send it when the connection is back.
+          if (!window.spendQueue) throw net;
+          window.spendQueue.add({ title, body });
+          closeSheet();
+          showToast('Saved on this phone. It will send when you\'re back online.', null);
+          if (window.dash) dash.reload();
+          return;
+        }
         if (!res.ok) throw new Error(explain(res));
         const made = await res.json();
         closeSheet();

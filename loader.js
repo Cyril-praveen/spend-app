@@ -53,9 +53,69 @@
     check(res);
   };
 
-  window.loadPurchases = async (token, repo) => {
+  // A copy of the last good load and any payments added while offline live in this phone's storage.
+  const CACHE_KEY = 'spend.cache';
+  const PENDING_KEY = 'spend.pending';
+  const jget = (k, d) => {
+    try {
+      const v = JSON.parse(localStorage.getItem(k) || 'null');
+      return v === null || v === undefined ? d : v;
+    } catch (e) {
+      return d;
+    }
+  };
+  const jset = (k, v) => {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage full or unavailable */ }
+  };
+
+  const split = (issues, now) => {
     const day = 86400000;
-    const now = Date.now();
+    const out = { mail_now: [], mail_prev: [] };
+    issues.forEach((i) => {
+      const age = now - Date.parse(i.created_at);
+      if (age <= 14 * day) out.mail_now.push(toRow(i));
+      else if (age <= 28 * day) out.mail_prev.push(toRow(i));
+    });
+    return out;
+  };
+
+  let flushing = null;
+  const queue = {
+    list: () => jget(PENDING_KEY, []),
+    add(entry) {
+      const item = { id: 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: entry.title, body: entry.body, created_at: new Date().toISOString() };
+      jset(PENDING_KEY, queue.list().concat(item));
+      return item;
+    },
+    // Sends saved payments one at a time, oldest first, and stops at the first one that fails.
+    flush(token, repo) {
+      if (flushing) return flushing;
+      flushing = (async () => {
+        let sent = 0;
+        for (const item of queue.list()) {
+          let res;
+          try {
+            res = await fetch('https://api.github.com/repos/' + repo + '/issues', {
+              method: 'POST',
+              headers: { ...headers(token), 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: item.title, body: item.body })
+            });
+          } catch (e) {
+            break;
+          }
+          if (!res.ok) break;
+          jset(PENDING_KEY, queue.list().filter((x) => x.id !== item.id));
+          sent++;
+        }
+        return sent;
+      })().finally(() => { flushing = null; });
+      return flushing;
+    }
+  };
+  window.spendQueue = queue;
+
+  const fetchIssues = async (token, repo, now) => {
+    const day = 86400000;
     const since = new Date(now - 29 * day).toISOString();
     const issues = [];
     for (let page = 1; page <= 6; page++) {
@@ -66,12 +126,27 @@
       issues.push(...items.filter((i) => !i.pull_request));
       if (items.length < 100) break;
     }
-    const out = { mail_now: [], mail_prev: [] };
-    issues.forEach((i) => {
-      const age = now - Date.parse(i.created_at);
-      if (age <= 14 * day) out.mail_now.push(toRow(i));
-      else if (age <= 28 * day) out.mail_prev.push(toRow(i));
-    });
-    return out;
+    return issues;
+  };
+
+  window.spendStale = false;
+  window.spendCachedAt = 0;
+  window.loadPurchases = async (token, repo) => {
+    const now = Date.now();
+    try { await queue.flush(token, repo); } catch (e) { /* anything unsent stays saved */ }
+    let issues;
+    try {
+      issues = await fetchIssues(token, repo, now);
+      jset(CACHE_KEY, { at: now, issues: issues.map((i) => ({ number: i.number, title: i.title, body: i.body, created_at: i.created_at })) });
+      window.spendStale = false;
+    } catch (e) {
+      const cached = jget(CACHE_KEY, null);
+      if ((e && e.kind === 'auth') || !cached || !Array.isArray(cached.issues)) throw e;
+      issues = cached.issues;
+      window.spendStale = true;
+      window.spendCachedAt = cached.at || 0;
+    }
+    const pending = queue.list().map((x) => ({ number: x.id, title: x.title, body: x.body, created_at: x.created_at }));
+    return split(issues.concat(pending), now);
   };
 })();

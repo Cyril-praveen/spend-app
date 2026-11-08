@@ -338,7 +338,7 @@
         row.setAttribute('aria-label', 'Edit ' + r.merchant);
         row.addEventListener('click', () => { if (window.spendEdit) window.spendEdit(r); });
         const mid = h('span', 'cat-mid');
-        mid.append(h('span', 'cat-name', r.merchant), h('span', 'cat-sub', (r.ts ? clock(new Date(r.ts)) + ' · ' : '') + r.category));
+        mid.append(h('span', 'cat-name', r.merchant), h('span', 'cat-sub', (r.ts ? clock(new Date(r.ts)) + ' · ' : '') + r.category + (String(r.id).indexOf('p-') === 0 ? ' · not sent yet' : '')));
         const amt = h('span', 'cat-amt' + (r.amount < 0 ? ' in' : ''), r.amount < 0 ? '+' + money(-r.amount) : money(r.amount));
         row.append(chip(icon, color), mid, amt);
         el.append(row);
