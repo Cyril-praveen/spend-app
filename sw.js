@@ -1,5 +1,5 @@
-const CACHE = 'spend-v4';
-const ASSETS = ['./', './index.html', './runtime.js', './calcs.js', './app.js', './loader.js', './main.js', './add.js', './vendor/d3.min.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'spend-v5';
+const ASSETS = ['./', './index.html', './runtime.js', './calcs.js', './app.js', './loader.js', './main.js', './add.js', './push.js', './vendor/d3.min.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -27,5 +27,39 @@ self.addEventListener('fetch', (event) => {
         return res;
       })
       .catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
+  );
+});
+
+// Alerts from the spending job. Every push must show a notification.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Spending', {
+      body: data.body || '',
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      data: { url: data.url || './' }
+    })
+  );
+});
+
+// Tapping an alert opens the app, or brings it forward and asks it to load the newest purchases.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => c.url.indexOf(self.registration.scope) === 0);
+      if (open) {
+        open.postMessage('refresh');
+        return open.focus();
+      }
+      return self.clients.openWindow(target);
+    })
   );
 });

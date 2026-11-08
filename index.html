@@ -137,6 +137,9 @@ button { font: inherit; color: inherit; }
 .foot dt { font-weight: 600; }
 .foot dd { margin: 0; color: var(--muted); }
 .foot p { margin: 10px 0 0; color: var(--muted); }
+.set-h { margin: 14px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.msg-inline { margin: 8px 0 0; font-size: 13.5px; color: var(--up); }
+.btn-plain[hidden] { display: none; }
 .btn-plain { margin-top: 10px; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--track); font-weight: 600; cursor: pointer; }
 
 /* Setup */
@@ -263,7 +266,13 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
       </dl>
     </details>
     <details>
-      <summary>Settings</summary>
+      <summary>Alerts and settings</summary>
+      <h3 class="set-h">Alerts</h3>
+      <p id="alerts-text">Checking…</p>
+      <p class="msg-inline" id="alerts-note" hidden></p>
+      <button type="button" class="btn-plain" id="alerts-on" hidden>Turn on alerts</button>
+      <button type="button" class="btn-plain" id="alerts-off" hidden>Turn off alerts</button>
+      <h3 class="set-h">This phone</h3>
       <p>The token that lets this app read your private spending repository, and a copy of your latest purchases so the app works offline, are saved only on this phone. Forgetting the token deletes that copy. Payments you add while offline stay on the phone until they send. It updates when you open it, every hour while it is open, or when you tap refresh.</p>
       <button type="button" class="btn-plain" id="forget">Forget the token on this phone</button>
     </details>
@@ -310,5 +319,6 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
 <script src="loader.js"></script>
 <script src="main.js"></script>
 <script src="add.js"></script>
+<script src="push.js"></script>
 </body>
 </html>
