@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spending">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f3f2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0e10" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>My spending</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f3f2ee; --card: #ffffff; --fg: #17171a; --muted: #75757c; --line: rgba(0, 0, 0, .07); --track: rgba(0, 0, 0, .06);
+  --accent: #1f6f55;
+  --up: #c4452c; --up-bg: rgba(196, 69, 44, .12); --down: #1a8a5a; --down-bg: rgba(26, 138, 90, .13);
+  --shadow: 0 1px 2px rgba(20, 20, 30, .04), 0 8px 24px rgba(20, 20, 30, .06);
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
+  --radius: 22px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e10; --card: #19191c; --fg: #f4f4f6; --muted: #9a9aa2; --line: rgba(255, 255, 255, .08); --track: rgba(255, 255, 255, .09);
+    --accent: #4fb28f;
+    --up: #ff8a70; --up-bg: rgba(255, 138, 112, .15); --down: #5fd39b; --down-bg: rgba(95, 211, 155, .15);
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.35; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+.page { max-width: 34rem; margin-inline: auto; padding: 0 max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.stack { display: grid; gap: 14px; }
+.muted { color: var(--muted); }
+
+/* Header */
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: max(14px, env(safe-area-inset-top)) 0 10px; margin-bottom: 4px; background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.top > div:first-child { min-width: 0; }
+.top h1 { margin: 0; font-size: clamp(26px, 7.4vw, 30px); white-space: nowrap; line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
+.top p { margin: 3px 0 0; font-size: 13px; color: var(--muted); min-height: 1.1em; }
+.icon-btn { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--card); color: var(--fg); box-shadow: var(--shadow); cursor: pointer; }
+.icon-btn:disabled { color: var(--muted); cursor: default; }
+.icon-btn.spin svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Cards */
+.card { background: var(--card); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { margin: 0 0 2px; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.card .sub { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+.msg { margin: 0 0 14px; padding: 13px 16px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow); font-size: 14.5px; }
+
+/* Hero */
+.hero { background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--card)), var(--card) 62%); padding-bottom: 14px; }
+.hero-label { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .02em; text-transform: uppercase; }
+.hero-amt { margin-top: 6px; font-size: 52px; line-height: 1; font-weight: 800; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.hero-amt .cents { font-size: 28px; font-weight: 700; color: var(--muted); letter-spacing: -.01em; }
+.hero-sub { margin-top: 8px; font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pill { display: inline-flex; align-items: center; gap: 2px; margin-top: 12px; padding: 6px 12px; border-radius: 99px; font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pill.up { color: var(--up); background: var(--up-bg); }
+.pill.down { color: var(--down); background: var(--down-bg); }
+.pill.flat { color: var(--muted); background: var(--track); }
+.pill .arrow { font-size: 10px; }
+.bars { margin-top: 16px; }
+.bars [data-draw] { min-height: 164px; }
+.avg-note { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0 0 8px; }
+.avg-big { font-size: 20px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.avg-note.under .avg-big { color: var(--down); }
+.avg-note.over .avg-big { color: var(--up); }
+.avg-small { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.line-svg { display: block; touch-action: pan-y; overflow: visible; }
+.grad-top { stop-color: var(--accent); stop-opacity: .26; }
+.grad-bot { stop-color: var(--accent); stop-opacity: 0; }
+.base { stroke: var(--track); stroke-width: 1; }
+.line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.avg-line { stroke: var(--fg); stroke-opacity: .55; stroke-width: 1.5; stroke-dasharray: 5 5; }
+.avg-label { font-family: var(--font); font-size: 10.5px; font-weight: 600; fill: var(--muted); }
+.avg-amt { font-size: 12.5px; font-weight: 700; fill: var(--fg); font-variant-numeric: tabular-nums; }
+.dot { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.dot.zero { fill: var(--track); stroke: none; }
+.dot.over { fill: var(--up); stroke: var(--up); }
+.dot.today { stroke-width: 3; }
+.guide { stroke: var(--muted); stroke-opacity: .5; stroke-width: 1; }
+.bars-axis text { font-family: var(--font); font-size: 11.5px; fill: var(--muted); }
+.scrub { margin: 4px 0 0; min-height: 1.3em; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Rows used by categories, merchants and purchases */
+.chip { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 14px; font-size: 20px; line-height: 1; background: color-mix(in srgb, var(--c) 17%, transparent); }
+.chip.letter { color: var(--c); font-size: 17px; font-weight: 800; border-radius: 50%; }
+.cat, .merch, .tx { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 0; text-align: left; }
+.cat { background: none; border: 0; cursor: pointer; border-radius: 14px; }
+.cat.on { background: color-mix(in srgb, var(--accent) 11%, transparent); margin-inline: -8px; padding-inline: 8px; width: calc(100% + 16px); }
+.cat-mid { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.cat-name { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-sub { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cat-amt { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cat-amt.in { color: var(--down); }
+.up-text { color: var(--up); font-weight: 600; }
+.down-text { color: var(--down); font-weight: 600; }
+.seg { display: flex; gap: 3px; height: 14px; margin-bottom: 8px; }
+.seg-part { flex: 1 1 0; min-width: 6px; background: var(--c); border-radius: 99px; transition: opacity .15s; }
+.seg-part.dim { opacity: .25; }
+.merch-track { display: block; height: 5px; margin-top: 5px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.merch-fill { display: block; height: 100%; border-radius: 99px; background: var(--c); }
+
+/* Ways to cut back */
+.tip { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-top: 1px solid var(--line); }
+.tip:first-child { border-top: 0; padding-top: 2px; }
+.tip-icon { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; background: var(--track); font-size: 16px; }
+.tip-text { margin: 0; font-size: 15px; line-height: 1.4; }
+
+/* Purchases */
+.day-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-bottom: 4px; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--line); }
+.day-head:first-child { margin-top: 0; }
+.day-total { font-variant-numeric: tabular-nums; }
+.filter { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 11%, transparent); font-size: 14px; font-weight: 600; }
+.link { border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; padding: 2px 4px; }
+.more { display: block; width: 100%; margin-top: 12px; padding: 12px; border: 0; border-radius: 14px; background: var(--track); font-weight: 600; cursor: pointer; }
+.empty-line { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+
+/* Loading and failure */
+.is-loading { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
+.sp-fail { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 4rem; color: var(--muted); font-size: 13px; }
+.sp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--up); }
+
+/* Footer */
+.foot { margin-top: 18px; display: grid; gap: 10px; }
+.foot details { background: var(--card); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); font-size: 14.5px; }
+.foot summary { cursor: pointer; font-weight: 600; }
+.foot dl { margin: 10px 0 0; display: grid; gap: 8px; }
+.foot dt { font-weight: 600; }
+.foot dd { margin: 0; color: var(--muted); }
+.foot p { margin: 10px 0 0; color: var(--muted); }
+.set-h { margin: 14px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.msg-inline { margin: 8px 0 0; font-size: 13.5px; color: var(--up); }
+.btn-plain[hidden] { display: none; }
+.setup-guide { margin: -4px 0 4px; font-size: 15px; }
+.setup-guide a { color: var(--accent); font-weight: 700; }
+.limit-pill { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 10px; border: 0; border-radius: 99px; background: var(--card); color: var(--fg); box-shadow: var(--shadow); font: inherit; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; }
+.limit-pill .pill-two { display: grid; text-align: left; line-height: 1.05; }
+.limit-pill .pill-two small { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .75; }
+.limit-pill.set { background: color-mix(in srgb, var(--accent) 18%, var(--card)); color: var(--accent); }
+.money-input { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 0 14px; min-height: 50px; }
+.money-input span { font-size: 18px; font-weight: 700; color: var(--muted); }
+.sheet .money-input input { flex: 1; min-width: 0; border: 0; background: none; padding: 13px 0; font-size: 20px; font-weight: 700; color: var(--fg); min-height: 0; }
+.money-input input:focus { outline: none; }
+.money-input:focus-within { border-color: var(--accent); }
+#limit-clear { margin: 0; }
+.set-limit { font-size: 13px; padding: 0; }
+
+.btn-plain { margin-top: 10px; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--track); font-weight: 600; cursor: pointer; }
+
+/* Setup */
+.setup { display: grid; gap: 14px; max-width: 26rem; margin: 9vh auto 0; }
+.setup .logo { width: 64px; height: 64px; border-radius: 16px; }
+.setup h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.025em; }
+.setup p { margin: 0; color: var(--muted); font-size: 15px; }
+.field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.field input { font: inherit; font-size: 16px; font-weight: 400; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; width: 100%; }
+.primary { padding: 14px 16px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; }
+.primary:disabled { opacity: .6; }
+.setup .msg { margin: 0; }
+.setup .fine, .fine { font-size: 13px; color: var(--muted); }
+.gbtn { min-height: 44px; display: flex; align-items: center; }
+#shortcut-missing { display: block; margin-top: 6px; }
+.install-tip { background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 16px; font-size: 15px; }
+.steps li { padding-left: 2px; }
+.steps ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
+.steps .primary, .steps .link-btn { display: inline-flex; justify-content: center; margin-top: 8px; text-decoration: none; }
+.code-box { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px dashed var(--line); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all; user-select: all; -webkit-user-select: all; }
+.acct { margin: 6px 0 0; font-size: 15px; }
+.acct b { word-break: break-all; }
+.danger-plain { margin-top: 10px; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--up-bg); color: var(--up); font-weight: 700; cursor: pointer; }
+
+/* Add a payment */
+.top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .42); }
+.sheet { position: fixed; z-index: 21; left: 0; right: 0; bottom: 0; max-width: 34rem; margin-inline: auto; max-height: 92vh; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 12px; padding: 10px 20px max(22px, env(safe-area-inset-bottom)); background: var(--card); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .25); animation: rise .22s ease-out; }
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } }
+.sheet h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.sheet .sub { margin: -6px 0 2px; font-size: 14px; color: var(--muted); }
+.grab { width: 38px; height: 5px; border-radius: 99px; background: var(--track); margin: 0 auto 6px; }
+.field select { font: inherit; font-size: 16px; font-weight: 400; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; width: 100%; appearance: none; -webkit-appearance: none; }
+.sheet .field input { background: var(--bg); min-height: 50px; }
+.sheet .field input[type=datetime-local] { min-width: 0; }
+.sheet-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 4px; }
+.sheet-actions .btn-plain { margin: 0; }
+.sheet .msg { margin: 0; background: var(--up-bg); color: var(--up); box-shadow: none; }
+.danger { padding: 12px; border: 0; border-radius: 14px; background: var(--up-bg); color: var(--up); font-weight: 700; font-size: 15px; cursor: pointer; }
+.tx { background: none; border: 0; border-radius: 14px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.tx:active { background: var(--track); }
+.toast { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: max(24px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); padding: 12px 16px; border-radius: 16px; background: var(--fg); color: var(--bg); font-size: 14.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0, 0, 0, .3); }
+.toast .link { color: inherit; text-decoration: underline; padding: 0; }
+body.sheet-open { overflow: hidden; }
+
+button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .is-loading, .icon-btn.spin svg { animation: none; } .seg-part { transition: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+<section class="setup" id="signin" hidden>
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1f6f55"/><rect x="14" y="34" width="9" height="16" rx="4.5" fill="#f6f1e4"/><rect x="27.5" y="22" width="9" height="28" rx="4.5" fill="#f6f1e4"/><rect x="41" y="12" width="9" height="38" rx="4.5" fill="#f6f1e4"/></svg>
+  <h1>My spending</h1>
+  <p>Every Apple Pay purchase, tracked automatically. Set a daily limit and get an alert when you go over.</p>
+  <p class="msg install-tip" id="install-tip" hidden>On iPhone, add this to your Home Screen first so alerts work: tap <b>Share</b>, then <b>Add to Home Screen</b>, and sign in from the new icon.</p>
+  <div class="gbtn" id="google-btn"><span class="muted">Loading sign-in…</span></div>
+  <p class="msg" id="signin-error" hidden></p>
+  <p class="fine">Your purchases are private to your account. Only you can see them, and you can delete your account and all its data any time in the app.</p>
+</section>
+
+<section class="setup" id="onboard" hidden>
+  <h1>Connect your iPhone</h1>
+  <p>One Shortcut sends each Apple Pay purchase here the moment you pay. This takes about 3 minutes.</p>
+  <ol class="steps">
+    <li>
+      <b>Copy your setup code.</b> It links the Shortcut to your account. Keep it private.
+      <div class="code-box"><code id="setup-code">Loading…</code></div>
+      <button type="button" class="primary" id="copy-code" disabled>Copy setup code</button>
+    </li>
+    <li>
+      <b>Add the Shortcut.</b> When it asks, paste your setup code.
+      <a class="primary link-btn" id="shortcut-link" href="#" target="_blank" rel="noopener" hidden>Get the Shortcut</a>
+      <span class="fine" id="shortcut-missing">Ask the person who shared this app for the Shortcut link.</span>
+    </li>
+    <li>
+      <b>Make two automations</b> in the Shortcuts app: tap <b>Automation</b>, then <b>+</b>.
+      <ul>
+        <li><b>Wallet</b>: pick your cards and <b>Run Immediately</b>, then choose <b>Log purchase</b>. This catches tap to pay.</li>
+        <li><b>Notification</b>: pick the <b>Wallet</b> app and <b>Run Immediately</b>, then choose <b>Log purchase</b>. This catches online Apple Pay.</li>
+      </ul>
+    </li>
+    <li><b>Pay with Apple Pay once.</b> It shows up here within a few seconds.</li>
+  </ol>
+  <button type="button" class="primary" id="onboard-done">Done, show my spending</button>
+  <p class="msg" id="onboard-error" hidden></p>
+</section>
+
+<div id="app" hidden>
+  <header class="top">
+    <div>
+      <h1>Spending</h1>
+      <p id="updated"></p>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="limit-pill" id="limit-open" aria-label="Set a daily limit">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg>
+        <span id="limit-pill-text">Set limit</span>
+      </button>
+      <button type="button" class="icon-btn" id="add-open" aria-label="Add a payment">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button type="button" class="icon-btn sp-refresh" aria-label="Refresh">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <p class="msg" id="offline-note" role="status" hidden></p>
+  <p class="msg" id="load-error" hidden>Could not load your purchases. Check your connection and tap the refresh button.</p>
+  <p class="msg sp-js-connect" hidden>Your sign-in has run out. Close the app and open it again to sign in.</p>
+  <p class="msg sp-js-empty" hidden>No purchases in the last two weeks yet. Purchases your phone sends after an Apple Pay payment show up here.</p>
+
+  <div class="stack">
+    <section class="card hero" id="headline" aria-label="Last two weeks at a glance">
+      <div class="hero-label">Last 14 days</div>
+      <div class="hero-amt" data-draw="h_amt">—</div>
+      <div class="hero-sub" data-draw="h_sub">—</div>
+      <div class="pill" data-draw="h_pill" hidden></div>
+      <div class="bars sp-js-full">
+        <div data-draw="days"></div>
+        <p class="scrub" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card sp-js-full" id="by-category">
+      <h2>Categories</h2>
+      <p class="sub">Tap one to see just those purchases.</p>
+      <div class="seg" data-draw="seg" aria-hidden="true"></div>
+      <div data-draw="cats"></div>
+    </section>
+
+    <section class="card sp-js-full" id="tips-card">
+      <h2>Ways to cut back</h2>
+      <p class="sub">Worked out from your own numbers.</p>
+      <div data-draw="tips"></div>
+    </section>
+
+    <section class="card sp-js-full" id="top-merchants">
+      <h2>Biggest merchants</h2>
+      <p class="sub">Where the most money went.</p>
+      <div data-draw="merch"></div>
+    </section>
+
+    <section class="card sp-js-full" id="latest">
+      <h2>Purchases</h2>
+      <p class="sub">Newest first. Tap one to edit it.</p>
+      <div data-draw="tx"></div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <details class="sp-js-full">
+      <summary>How this is worked out</summary>
+      <dl>
+        <dt>Purchases</dt>
+        <dd>Each purchase your phone sends after an Apple Pay payment, tap or online, saved privately to your account.</dd>
+        <dt>Duplicates</dt>
+        <dd>A tap and a Wallet notification for the same amount within ten minutes count once.</dd>
+        <dt>Categories</dt>
+        <dd>Matched from the merchant name first. If that isn't recognised, the category your phone picked is used. Anything else is Other.</dd>
+        <dt>Refunds</dt>
+        <dd>Counted as negative spending, so they lower the totals.</dd>
+        <dt>Left out</dt>
+        <dd>Declined payments, test entries with no amount, and anything not paid with Apple Pay.</dd>
+      </dl>
+    </details>
+    <details id="settings-details">
+      <summary>Alerts and settings</summary>
+      <h3 class="set-h">Alerts</h3>
+      <p id="alerts-text">Checking…</p>
+      <p class="msg-inline" id="alerts-note" hidden></p>
+      <button type="button" class="btn-plain" id="alerts-on" hidden>Turn on alerts</button>
+      <button type="button" class="btn-plain" id="alerts-off" hidden>Turn off alerts</button>
+      <h3 class="set-h">Your account</h3>
+      <p class="acct">Signed in as <b id="acct-email">…</b></p>
+      <button type="button" class="btn-plain" id="show-code">Set up the Shortcut again</button>
+      <button type="button" class="btn-plain" id="sign-out">Sign out on this phone</button>
+      <button type="button" class="btn-plain" id="sign-out-all">Sign out everywhere</button>
+      <p class="fine" style="margin-top:12px">Your purchases are stored privately on this app's server and only your account can read them. A copy of recent purchases is kept on this phone so the app works offline; signing out deletes that copy.</p>
+      <button type="button" class="danger-plain" id="delete-account">Delete my account and all data</button>
+      <p class="msg-inline" id="acct-note" hidden></p>
+    </details>
+  </div>
+</div>
+</div>
+
+<div class="backdrop" id="add-backdrop" hidden></div>
+<div class="backdrop" id="limit-backdrop" hidden></div>
+<form class="sheet" id="limit-sheet" role="dialog" aria-modal="true" aria-labelledby="limit-title" hidden novalidate>
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="limit-title">Daily limit</h2>
+  <p class="sub" id="limit-text">Pick how much you want to spend a day. The chart, alerts and morning note will use it.</p>
+  <label class="field"><span>Amount per day</span>
+    <span class="money-input"><span aria-hidden="true">$</span><input id="limit-input" type="number" inputmode="decimal" min="1" max="100000" step="any" autocomplete="off" placeholder="30"></span>
+  </label>
+  <p class="msg" id="limit-note" hidden></p>
+  <div class="sheet-actions">
+    <button type="button" class="btn-plain" id="limit-cancel">Cancel</button>
+    <button type="submit" class="primary" id="limit-save">Save limit</button>
+  </div>
+  <button type="button" class="btn-plain" id="limit-clear" hidden>Remove limit and use my average</button>
+</form>
+<form class="sheet" id="add-sheet" role="dialog" aria-modal="true" aria-labelledby="add-title" hidden novalidate>
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="add-title">Add a payment</h2>
+  <p class="sub">For an Apple Pay payment your phone didn't send.</p>
+  <label class="field"><span>Merchant</span><input id="add-merchant" autocomplete="off" autocapitalize="words" autocorrect="off" placeholder="Adonis"></label>
+  <label class="field"><span>Amount</span><input id="add-amount" inputmode="decimal" autocomplete="off" placeholder="0.00"></label>
+  <label class="field"><span>Category</span>
+    <select id="add-category">
+      <option value="">Pick for me</option>
+      <option>Groceries</option>
+      <option>Dining &amp; Coffee</option>
+      <option>Transport</option>
+      <option>Subscriptions &amp; Software</option>
+      <option>Shopping</option>
+      <option>Entertainment</option>
+      <option>Health &amp; Personal Care</option>
+      <option>Bills &amp; Utilities</option>
+      <option>Travel</option>
+      <option>Other</option>
+    </select>
+  </label>
+  <label class="field"><span>When</span><input id="add-when" type="datetime-local"></label>
+  <p class="msg" id="add-error" hidden></p>
+  <div class="sheet-actions">
+    <button type="button" class="btn-plain" id="add-cancel">Cancel</button>
+    <button type="submit" class="primary" id="add-save">Add payment</button>
+  </div>
+  <button type="button" class="danger" id="add-delete" hidden>Delete payment</button>
+</form>
+<div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button type="button" class="link" id="toast-undo">Undo</button></div>
+
+<script src="vendor/d3.min.js"></script>
+<script src="api.js"></script>
+<script src="runtime.js"></script>
+<script src="calcs.js"></script>
+<script src="app.js"></script>
+<script src="loader.js"></script>
+<script src="main.js"></script>
+<script src="add.js"></script>
+<script src="push.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>
