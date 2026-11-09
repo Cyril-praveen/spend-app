@@ -1,7 +1,12 @@
 (function () {
   const KEY_TOKEN = 'spend.token';
   const KEY_REPO = 'spend.repo';
-  const DEFAULT_REPO = 'Cyril-praveen/spend-data';
+  // Accepts "name/repo" or a pasted GitHub address like https://github.com/name/repo.
+  const cleanRepo = (v) => {
+    const t = String(v || '').trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
+    const parts = t.split('/').filter(Boolean);
+    return parts.length >= 2 ? parts[0] + '/' + parts[1] : '';
+  };
   const $ = (s) => document.querySelector(s);
   const read = (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
   const write = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } };
@@ -14,15 +19,17 @@
     err.hidden = !message;
     err.textContent = message || '';
     if (on) {
-      $('#repo').value = read(KEY_REPO) || DEFAULT_REPO;
+      let fromLink = '';
+      try { fromLink = cleanRepo(new URLSearchParams(location.search).get('repo') || ''); } catch (e) { /* no link value */ }
+      $('#repo').value = read(KEY_REPO) || fromLink;
       $('#token').value = '';
     }
   };
 
   const start = () => {
     const token = read(KEY_TOKEN);
-    const repo = read(KEY_REPO) || DEFAULT_REPO;
-    if (!token) {
+    const repo = read(KEY_REPO);
+    if (!token || !repo) {
       dash.stop();
       showSetup(true);
       return;
@@ -33,9 +40,16 @@
 
   $('#save').addEventListener('click', async () => {
     const token = $('#token').value.trim();
-    const repo = $('#repo').value.trim() || DEFAULT_REPO;
+    const repo = cleanRepo($('#repo').value);
+    const typedRepo = $('#repo').value;
+    if (!repo) {
+      showSetup(true, 'Type your repository as your-github-name/spend-data.');
+      $('#repo').value = typedRepo;
+      return;
+    }
     if (!token) {
       showSetup(true, 'Paste the token first.');
+      $('#repo').value = typedRepo;
       return;
     }
     const btn = $('#save');
@@ -48,9 +62,11 @@
       start();
     } catch (e) {
       const typed = $('#repo').value;
-      showSetup(true, e && e.kind === 'auth'
-        ? 'GitHub refused that. Check the repository name and that the token has Issues access to it.'
-        : 'Could not reach GitHub. Check your connection and try again.');
+      showSetup(true, e && e.kind === 'public'
+        ? 'That repository is public, so anyone could see your purchases. In GitHub open the repository, then Settings, scroll to Danger Zone, and change visibility to Private. Then try again.'
+        : e && e.kind === 'auth'
+          ? 'GitHub refused that. Check the repository name and that the token has Issues access to it.'
+          : 'Could not reach GitHub. Check your connection and try again.');
       $('#repo').value = typed;
     } finally {
       btn.disabled = false;

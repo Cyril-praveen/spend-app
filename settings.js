@@ -5,7 +5,6 @@
   const KEY_TOKEN = 'spend.token';
   const KEY_REPO = 'spend.repo';
   const KEY_LIMIT = 'spend.limit';
-  const DEFAULT_REPO = 'Cyril-praveen/spend-data';
   const $ = (s) => document.querySelector(s);
   const read = (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
   const write = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } };
@@ -26,7 +25,7 @@
   const clearBtn = $('#limit-clear');
   if (!sheet || !backdrop || !openBtn || !input) return;
 
-  const gh = (method, p, body) => fetch('https://api.github.com/repos/' + (read(KEY_REPO) || DEFAULT_REPO) + p, {
+  const gh = (method, p, body) => fetch('https://api.github.com/repos/' + read(KEY_REPO) + p, {
     method,
     headers: {
       Authorization: 'Bearer ' + read(KEY_TOKEN),

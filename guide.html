@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f3f2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0e10" media="(prefers-color-scheme: dark)">
+<title>Set up My spending</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f3f2ee; --card: #ffffff; --fg: #17171a; --muted: #6f6f76; --line: rgba(0, 0, 0, .08); --track: rgba(0, 0, 0, .06);
+  --accent: #1f6f55; --warn: #a3401f; --warn-bg: rgba(196, 69, 44, .1);
+  --shadow: 0 1px 2px rgba(20, 20, 30, .04), 0 8px 24px rgba(20, 20, 30, .06);
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e0e10; --card: #19191c; --fg: #f4f4f6; --muted: #9a9aa2; --line: rgba(255, 255, 255, .09); --track: rgba(255, 255, 255, .09); --accent: #4fb28f; --warn: #ff9a80; --warn-bg: rgba(255, 138, 112, .13); --shadow: none; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+main { max-width: 34rem; margin: 0 auto; padding: max(22px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom)); }
+.logo { width: 56px; height: 56px; display: block; }
+h1 { margin: 14px 0 6px; font-size: 30px; line-height: 1.1; font-weight: 800; letter-spacing: -.025em; }
+.lead { margin: 0 0 14px; color: var(--muted); font-size: 16px; }
+.card { background: var(--card); border-radius: 22px; padding: 18px; box-shadow: var(--shadow); margin-top: 12px; }
+.privacy { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+.privacy b { color: var(--accent); }
+.step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+.num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 16%, var(--card)); color: var(--accent); font-weight: 800; }
+.step h2 { margin: 4px 0 6px; font-size: 18px; letter-spacing: -.01em; }
+.step p, .step li { margin: 0 0 8px; font-size: 15px; }
+.step ol, .step ul { margin: 0 0 8px; padding-left: 20px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 8px 4px 0; padding: 12px 16px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 15px; text-decoration: none; border: 0; cursor: pointer; }
+.btn.plain { background: var(--track); color: var(--fg); }
+.btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.note { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: 14px; font-weight: 600; }
+.field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 4px; }
+.field input { font: inherit; font-size: 17px; font-weight: 500; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; width: 100%; }
+.field input:focus { outline: none; border-color: var(--accent); }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; background: var(--track); padding: 1px 6px; border-radius: 6px; word-break: break-all; }
+.muted { color: var(--muted); }
+.done { font-size: 15px; }
+.small { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1f6f55"/><rect x="14" y="34" width="9" height="16" rx="4.5" fill="#f6f1e4"/><rect x="27.5" y="22" width="9" height="28" rx="4.5" fill="#f6f1e4"/><rect x="41" y="12" width="9" height="38" rx="4.5" fill="#f6f1e4"/></svg>
+  <h1>Set up My spending</h1>
+  <p class="lead">Track every Apple Pay purchase automatically, see a daily limit, and get alerts when you go over. Setup takes about 15 minutes on your iPhone.</p>
+
+  <div class="card privacy">
+    <span aria-hidden="true">🔒</span>
+    <div><b>Your data stays yours.</b> Purchases are saved in your own private GitHub repository. Nobody else, including the person who shared this, can see them.</div>
+  </div>
+
+  <section class="card step" id="s0">
+    <div class="num">1</div>
+    <div>
+      <h2>Your GitHub account</h2>
+      <p>No account yet? Make a free one, then come back.</p>
+      <a class="btn plain" href="https://github.com/signup" target="_blank" rel="noopener">Make a GitHub account</a>
+      <label class="field"><span>Your GitHub username</span><input id="user" autocapitalize="off" autocorrect="off" autocomplete="username" spellcheck="false" placeholder="for example jane-doe"></label>
+      <p class="small">The buttons below fill in your name for you.</p>
+    </div>
+  </section>
+
+  <section class="card step">
+    <div class="num">2</div>
+    <div>
+      <h2>Make your private repository</h2>
+      <p>This is where your purchases are saved.</p>
+      <ol>
+        <li>Check the name is <code>spend-data</code>.</li>
+        <li>Make sure <b>Private</b> is picked.</li>
+        <li>Turn on <b>Add README</b>, then tap <b>Create repository</b>.</li>
+      </ol>
+      <a class="btn" href="https://github.com/new?name=spend-data&visibility=private&description=My%20spending" target="_blank" rel="noopener">Create spend-data</a>
+      <p class="note">It must be Private. The app refuses a public repository so your purchases never become public.</p>
+    </div>
+  </section>
+
+  <section class="card step">
+    <div class="num">3</div>
+    <div>
+      <h2>Add the alerts file</h2>
+      <p>This lets your repository send you notifications: what you can spend each morning, an alert when you go over, and a 9 PM summary.</p>
+      <ol>
+        <li>Tap the button. The file is already filled in.</li>
+        <li>Tap <b>Commit changes</b>, then <b>Commit changes</b> again.</li>
+      </ol>
+      <a class="btn js-need-user" id="add-file" href="#" target="_blank" rel="noopener" aria-disabled="true">Add the alerts file</a>
+      <p class="small" id="file-status">Type your username in step 1 first.</p>
+    </div>
+  </section>
+
+  <section class="card step">
+    <div class="num">4</div>
+    <div>
+      <h2>Make a token</h2>
+      <p>The token lets your phone write purchases to your repository, and nothing else.</p>
+      <ol>
+        <li>Tap the button. The name, expiry and permission are filled in.</li>
+        <li>Under <b>Repository access</b>, pick <b>Only select repositories</b> and choose <code>spend-data</code>.</li>
+        <li>Check that <b>Issues</b> says <b>Read and write</b>.</li>
+        <li>Tap <b>Generate token</b> and copy it. You only see it once, so keep it in Notes for the next steps.</li>
+      </ol>
+      <a class="btn js-need-user" id="make-token" href="#" target="_blank" rel="noopener" aria-disabled="true">Make the token</a>
+      <p class="small">It lasts a year. GitHub emails you before it runs out.</p>
+    </div>
+  </section>
+
+  <section class="card step">
+    <div class="num">5</div>
+    <div>
+      <h2>Get the two Shortcuts</h2>
+      <p>These send each purchase to your repository the moment you pay.</p>
+      <div id="shortcut-links"></div>
+      <ol>
+        <li>When you add each one, it asks two questions. Paste your token, and type your repository: <code class="js-repo">your-name/spend-data</code></li>
+        <li>Open the <b>Shortcuts</b> app, tap <b>Automation</b>, then <b>+</b>.</li>
+        <li>Pick <b>Wallet</b>, choose your cards, pick <b>Run Immediately</b>, then <b>Next</b>. Choose <b>Run Shortcut</b> and select <b>Log tap</b>.</li>
+        <li>Make a second automation: pick <b>Notification</b>, choose the <b>Wallet</b> app, pick <b>Run Immediately</b>. Choose <b>Run Shortcut</b>, select <b>Log Wallet alert</b>, and pass the notification in as the input.</li>
+      </ol>
+      <p class="small">The first catches tap-to-pay at stores. The second catches online Apple Pay. If both fire for one purchase, the app counts it once.</p>
+    </div>
+  </section>
+
+  <section class="card step">
+    <div class="num">6</div>
+    <div>
+      <h2>Put the app on your Home Screen</h2>
+      <ol>
+        <li>Open the app link below <b>in Safari</b>.</li>
+        <li>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</li>
+        <li>Open it from the new icon, paste your token, and tap <b>Save and load</b>.</li>
+      </ol>
+      <a class="btn js-need-user" id="open-app" href="./" aria-disabled="false">Open the app</a>
+    </div>
+  </section>
+
+  <section class="card step">
+    <div class="num">7</div>
+    <div>
+      <h2>Finish in the app</h2>
+      <ul>
+        <li>Tap <b>Set limit</b> at the top to pick how much you want to spend a day.</li>
+        <li>At the bottom, open <b>Alerts and settings</b> and tap <b>Turn on alerts</b>. A "Spending alerts are on" notification means it all works.</li>
+        <li>Pay for something with Apple Pay. It shows up in the app within a minute.</li>
+      </ul>
+      <p class="done">That's it. 🎉</p>
+    </div>
+  </section>
+
+  <p class="small" style="margin-top:18px">Stuck? Most problems are the token: it needs <b>Issues: Read and write</b> and access to <code>spend-data</code>. You can make a new one any time and enter it again under Alerts and settings, then Forget the token.</p>
+</main>
+<script>
+(function () {
+  // Two iCloud links for the shared Shortcuts. Leave empty to show "ask for them" instead.
+  const SHORTCUTS = [
+    { name: 'Log tap', url: '' },
+    { name: 'Log Wallet alert', url: '' }
+  ];
+  const $ = (s) => document.querySelector(s);
+  const userInput = $('#user');
+  const read = (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+  const write = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } };
+  let workflow = '';
+
+  const clean = (v) => String(v || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?github\.com\//i, '').split('/')[0].replace(/[^A-Za-z0-9-]/g, '');
+
+  const box = $('#shortcut-links');
+  const ready = SHORTCUTS.filter((s) => s.url);
+  if (ready.length) {
+    ready.forEach((s) => {
+      const a = document.createElement('a');
+      a.className = 'btn';
+      a.href = s.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'Get ' + s.name;
+      box.append(a);
+    });
+  } else {
+    const p = document.createElement('p');
+    p.className = 'note';
+    p.textContent = 'Ask the person who sent you this guide for the two Shortcut links: Log tap and Log Wallet alert.';
+    box.append(p);
+  }
+
+  const setLink = (el, href, ok) => {
+    el.href = ok ? href : '#';
+    el.setAttribute('aria-disabled', ok ? 'false' : 'true');
+  };
+
+  const render = () => {
+    const user = clean(userInput.value);
+    const repo = user ? user + '/spend-data' : '';
+    document.querySelectorAll('.js-repo').forEach((e) => { e.textContent = repo || 'your-name/spend-data'; });
+    const fileUrl = 'https://github.com/' + user + '/spend-data/new/main?filename=' + encodeURIComponent('.github/workflows/notify.yml') + '&value=' + encodeURIComponent(workflow);
+    setLink($('#add-file'), fileUrl, !!(user && workflow));
+    $('#file-status').textContent = !user ? 'Type your username in step 1 first.' : workflow ? 'Opens ' + repo + ' with the file ready to save.' : 'Loading the file…';
+    const token = 'https://github.com/settings/personal-access-tokens/new?name=' + encodeURIComponent('Spending app') +
+      '&description=' + encodeURIComponent('Lets my iPhone save purchases to spend-data') + '&expires_in=366&issues=write' + (user ? '&target_name=' + encodeURIComponent(user) : '');
+    setLink($('#make-token'), token, true);
+    setLink($('#open-app'), './' + (repo ? '?repo=' + encodeURIComponent(repo) : ''), true);
+  };
+
+  userInput.value = read('guide.user');
+  userInput.addEventListener('input', () => {
+    write('guide.user', clean(userInput.value));
+    render();
+  });
+
+  fetch('setup/notify.yml', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+    .then((t) => { workflow = t; render(); })
+    .catch(() => { $('#file-status').textContent = 'Could not load the file. Check your connection and reload this page.'; });
+  render();
+})();
+</script>
+</body>
+</html>

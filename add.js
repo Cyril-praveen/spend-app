@@ -74,7 +74,7 @@
     editing = null;
   };
 
-  const api = (path, init) => fetch('https://api.github.com/repos/' + (read(KEY_REPO) || 'Cyril-praveen/spend-data') + path, {
+  const api = (path, init) => fetch('https://api.github.com/repos/' + read(KEY_REPO) + path, {
     cache: 'no-store',
     ...init,
     headers: {

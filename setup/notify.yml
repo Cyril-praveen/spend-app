@@ -1,0 +1,53 @@
+name: Spending alerts
+
+# Sends push notifications to the phone:
+#   - right after a new purchase, if today's spending is over (or close to) the 14-day daily average
+#   - every morning at 8 AM Toronto time, how much can be spent today
+#   - every night at 9 PM Toronto time, a reminder with the day's total
+# The numbers are worked out by the same code the app uses (Cyril-praveen/spend-app, folder notify).
+
+on:
+  issues:
+    types: [opened]
+  schedule:
+    # 8 AM Toronto is 12:00 UTC in summer and 13:00 UTC in winter; 9 PM is 01:00 / 02:00 UTC. Both of each are listed, and the
+    # script decides from the Toronto hour whether this run is the morning note, the evening note, or neither.
+    - cron: '5 12 * * *'
+    - cron: '5 13 * * *'
+    - cron: '5 1 * * *'
+    - cron: '5 2 * * *'
+  push:
+    paths:
+      - '.github/workflows/notify.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'summary = tonight reminder, morning = this morning note, test = test alert (sent now)'
+        type: choice
+        options: [summary, morning, test]
+        default: summary
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TZ: America/Toronto
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: Cyril-praveen/spend-app
+          path: app
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install the push library
+        run: npm ci --prefix app/notify --no-audit --no-fund
+      - name: Work out the numbers and notify
+        run: node app/notify/run.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

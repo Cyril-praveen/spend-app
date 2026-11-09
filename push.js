@@ -5,7 +5,6 @@
   const KEY_TOKEN = 'spend.token';
   const KEY_REPO = 'spend.repo';
   const KEY_DEVICE = 'spend.device';
-  const DEFAULT_REPO = 'Cyril-praveen/spend-data';
   const $ = (s) => document.querySelector(s);
   const read = (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
   const write = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } };
@@ -24,7 +23,7 @@
     'Content-Type': 'application/json'
   });
   const gh = (method, p, body) => {
-    const repo = read(KEY_REPO) || DEFAULT_REPO;
+    const repo = read(KEY_REPO);
     return fetch('https://api.github.com/repos/' + repo + p, { method, headers: headers(read(KEY_TOKEN)), body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
   };
 
@@ -130,7 +129,15 @@
       const key = keyCache || (await publicKey());
       keyCache = key;
       if (!key) {
-        message = 'Alerts are not ready on GitHub yet. Give it a minute and try again.';
+        // First time on this repository: opening a "setup" issue starts the alert job, which makes the key.
+        try {
+          const made = await gh('POST', '/issues', { title: 'setup: alerts', body: 'Started from the app to get alerts ready.' });
+          if (made.ok) {
+            const i = await made.json();
+            await gh('PATCH', '/issues/' + i.number, { state: 'closed' });
+          }
+        } catch (e) { /* the message below still applies */ }
+        message = 'Getting alerts ready on GitHub for the first time. Wait a minute, then tap Turn on alerts again. If it still says this, add the alerts file (step 3 of the setup guide).';
         return;
       }
       const reg = await ready();

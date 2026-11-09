@@ -21,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const REPO = process.env.GITHUB_REPOSITORY || 'Cyril-praveen/spend-data';
+const REPO = process.env.GITHUB_REPOSITORY || '';
 const TOKEN = process.env.GH_TOKEN || '';
 const FIXTURE = process.env.SPEND_FIXTURE || '';
 const DRY = process.env.DRY_RUN === '1';
@@ -304,7 +304,7 @@ const morningFor = (n, limit) => {
       } catch (e) { log('could not read the device entry'); }
       return;
     }
-    if (labels.some((l) => l in LABELS) || /^(push-key|summary|device-off|settings)/.test(issue.title || '')) return;
+    if (labels.some((l) => l in LABELS) || /^(push-key|summary|device-off|settings|setup)/.test(issue.title || '')) return;
     const n = await compute();
     const msg = alertFor(n, issue, await getLimit());
     log(msg ? 'alert: ' + msg.title : 'no alert needed');

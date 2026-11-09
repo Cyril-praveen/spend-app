@@ -141,6 +141,8 @@ button { font: inherit; color: inherit; }
 .set-h { margin: 14px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
 .msg-inline { margin: 8px 0 0; font-size: 13.5px; color: var(--up); }
 .btn-plain[hidden] { display: none; }
+.setup-guide { margin: -4px 0 4px; font-size: 15px; }
+.setup-guide a { color: var(--accent); font-weight: 700; }
 .limit-pill { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 10px; border: 0; border-radius: 99px; background: var(--card); color: var(--fg); box-shadow: var(--shadow); font: inherit; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; }
 .limit-pill .pill-two { display: grid; text-align: left; line-height: 1.05; }
 .limit-pill .pill-two small { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .75; }
@@ -197,7 +199,8 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
   <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1f6f55"/><rect x="14" y="34" width="9" height="16" rx="4.5" fill="#f6f1e4"/><rect x="27.5" y="22" width="9" height="28" rx="4.5" fill="#f6f1e4"/><rect x="41" y="12" width="9" height="38" rx="4.5" fill="#f6f1e4"/></svg>
   <h1>My spending</h1>
   <p>Connect your private spending repository. Paste the GitHub token you made for it. It is saved only on this phone.</p>
-  <label class="field"><span>Repository</span><input id="repo" value="Cyril-praveen/spend-data" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+  <p class="setup-guide">New here? <a href="guide.html">Follow the setup guide</a> (about 15 minutes).</p>
+  <label class="field"><span>Repository</span><input id="repo" placeholder="your-github-name/spend-data" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></label>
   <label class="field"><span>Token</span><input id="token" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="github_pat_..."></label>
   <button type="button" class="primary" id="save">Save and load</button>
   <p class="msg" id="setup-error" hidden></p>

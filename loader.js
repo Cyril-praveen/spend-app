@@ -48,8 +48,17 @@
     };
   };
 
+  // Makes sure the token works and the repository is private, so purchases never end up public.
   window.checkRepo = async (token, repo) => {
-    const res = await fetch('https://api.github.com/repos/' + repo + '/issues?state=all&per_page=1', { headers: headers(token) });
+    const info = await fetch('https://api.github.com/repos/' + repo, { headers: headers(token), cache: 'no-store' });
+    check(info);
+    const meta = await info.json();
+    if (meta && meta.private === false) {
+      const e = new Error('The repository is public');
+      e.kind = 'public';
+      throw e;
+    }
+    const res = await fetch('https://api.github.com/repos/' + repo + '/issues?state=all&per_page=1', { headers: headers(token), cache: 'no-store' });
     check(res);
   };
 
@@ -115,7 +124,7 @@
   window.spendQueue = queue;
 
   // Issues the alert job keeps for itself (push keys, saved phones, the latest summary) are not purchases.
-  const bookkeeping = (i) => (i.labels || []).some((l) => /^(push-key|push-device|summary|settings)$/.test(l && l.name)) || /^(push-key|device|device-off|summary|settings):?/.test(String(i.title || ''));
+  const bookkeeping = (i) => (i.labels || []).some((l) => /^(push-key|push-device|summary|settings)$/.test(l && l.name)) || /^(push-key|device|device-off|summary|settings|setup):?/.test(String(i.title || ''));
 
   const fetchIssues = async (token, repo, now) => {
     const day = 86400000;
