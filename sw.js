@@ -1,4 +1,4 @@
-const CACHE = 'spend-v6';
+const CACHE = 'spend-v7';
 const ASSETS = ['./', './index.html', './runtime.js', './calcs.js', './app.js', './loader.js', './main.js', './add.js', './push.js', './settings.js', './vendor/d3.min.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -22,8 +22,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(req)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy));
+        // Only good answers are saved, so a failed load never replaces the working offline copy.
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
         return res;
       })
       .catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))

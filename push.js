@@ -69,6 +69,9 @@
 
   let message = '';
   let busy = false;
+  // Fetched ahead of time so the tap goes straight to the iPhone permission prompt with nothing in between.
+  let keyCache = '';
+  const preload = () => { if (!keyCache && read(KEY_TOKEN)) publicKey().then((k) => { keyCache = k; }).catch(() => {}); };
 
   const render = async () => {
     const text = $('#alerts-text');
@@ -95,6 +98,7 @@
       const reg = await ready();
       sub = await reg.pushManager.getSubscription();
     } catch (e) { /* no worker yet */ }
+    if (!(mine && sub)) preload();
     if (mine && sub && Notification.permission === 'granted') {
       text.textContent = 'Alerts are on. ' + idle;
       off.hidden = false;
@@ -123,7 +127,8 @@
         message = perm === 'denied' ? '' : 'Alerts stay off until you allow notifications.';
         return;
       }
-      const key = await publicKey();
+      const key = keyCache || (await publicKey());
+      keyCache = key;
       if (!key) {
         message = 'Alerts are not ready on GitHub yet. Give it a minute and try again.';
         return;

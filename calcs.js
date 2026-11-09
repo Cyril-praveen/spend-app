@@ -49,7 +49,8 @@ dash.calc('spend', {
       return isNaN(b) ? 0 : b;
     };
     const dayOf = (r, ts) => {
-      if (new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}').test(r.when || '')) return r.when.slice(0, 10);
+      // A date with no time is taken as written. Anything with a time (UTC or an offset) is put on the local day it happened.
+      if (new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$').test(String(r.when || '').trim()) || !ts) return String(r.when || '').trim().slice(0, 10);
       const d = new Date(ts);
       const p = (n) => (n < 10 ? '0' : '') + n;
       return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
