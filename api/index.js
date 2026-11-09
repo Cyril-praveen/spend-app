@@ -2,8 +2,17 @@
 // The whole server: one function, routed by path. Every route except sign-in, config, the Shortcut log and the
 // timed notes needs a signed-in session, and every query is limited to that person's own rows.
 const crypto = require('crypto');
-const { SignJWT, jwtVerify, createRemoteJWKSet } = require('jose');
-const webpush = require('web-push');
+// jose is published only as an ES module, so it is loaded with import() the first time it is needed.
+let joseLib = null;
+const jose = async () => joseLib || (joseLib = await import('jose'));
+let webpushLib = null;
+const webpushMod = async () => {
+  if (!webpushLib) {
+    const m = await import('web-push');
+    webpushLib = m.default || m;
+  }
+  return webpushLib;
+};
 const { q } = require('../lib/db');
 const { numbers } = require('../lib/compute');
 const notes = require('../lib/notes');
@@ -62,7 +71,7 @@ const issueOf = (r) => ({ number: Number(r.id), title: r.title, body: r.body, st
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest('hex');
 
 // ---- sessions -------------------------------------------------------------------------------------------------
-const makeSession = (user) => new SignJWT({ v: user.session_version })
+const makeSession = async (user) => new (await jose()).SignJWT({ v: user.session_version })
   .setProtectedHeader({ alg: 'HS256' })
   .setSubject(user.id)
   .setIssuedAt()
@@ -74,7 +83,7 @@ const signedIn = async (req) => {
   if (!token) fail(401, 'Please sign in');
   let payload;
   try {
-    ({ payload } = await jwtVerify(token, sessionKey(), { algorithms: ['HS256'] }));
+    ({ payload } = await (await jose()).jwtVerify(token, sessionKey(), { algorithms: ['HS256'] }));
   } catch (e) {
     fail(401, 'Please sign in again');
   }
@@ -88,9 +97,10 @@ const signedIn = async (req) => {
 let googleKeys = null;
 let verifyGoogle = async (credential) => {
   if (!env('GOOGLE_CLIENT_ID')) fail(503, 'Google sign-in is not set up yet');
-  if (!googleKeys) googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+  const j = await jose();
+  if (!googleKeys) googleKeys = j.createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
   try {
-    const { payload } = await jwtVerify(credential, googleKeys, {
+    const { payload } = await j.jwtVerify(credential, googleKeys, {
       issuer: ['https://accounts.google.com', 'accounts.google.com'],
       audience: env('GOOGLE_CLIENT_ID')
     });
@@ -159,20 +169,20 @@ const fromShortcut = (input) => {
 };
 
 // ---- push -------------------------------------------------------------------------------------------------------
-const pushReady = () => {
+const pushReady = async () => {
   if (!env('VAPID_PUBLIC_KEY') || !env('VAPID_PRIVATE_KEY')) return false;
   try {
-    webpush.setVapidDetails(SITE(), env('VAPID_PUBLIC_KEY'), env('VAPID_PRIVATE_KEY'));
+    (await webpushMod()).setVapidDetails(SITE(), env('VAPID_PUBLIC_KEY'), env('VAPID_PRIVATE_KEY'));
     return true;
   } catch (e) {
     console.error('push keys are not usable:', e.message);
     return false;
   }
 };
-let pushSender = (sub, payload) => webpush.sendNotification(sub, payload, { TTL: 6 * 3600, urgency: 'high' });
+let pushSender = async (sub, payload) => (await webpushMod()).sendNotification(sub, payload, { TTL: 6 * 3600, urgency: 'high' });
 
 const pushTo = async (userId, message, only) => {
-  if (!pushReady()) return 0;
+  if (!(await pushReady())) return 0;
   const devices = only ? [only] : await q('select * from devices where user_id = $1', [userId]);
   let sent = 0;
   for (const d of devices) {
