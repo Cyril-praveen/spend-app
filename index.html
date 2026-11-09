@@ -42,7 +42,8 @@ button { font: inherit; color: inherit; }
 
 /* Header */
 .top { position: sticky; top: 0; z-index: 5; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: max(14px, env(safe-area-inset-top)) 0 10px; margin-bottom: 4px; background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
-.top h1 { margin: 0; font-size: 32px; line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
+.top > div:first-child { min-width: 0; }
+.top h1 { margin: 0; font-size: clamp(26px, 7.4vw, 30px); white-space: nowrap; line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
 .top p { margin: 3px 0 0; font-size: 13px; color: var(--muted); min-height: 1.1em; }
 .icon-btn { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--card); color: var(--fg); box-shadow: var(--shadow); cursor: pointer; }
 .icon-btn:disabled { color: var(--muted); cursor: default; }
@@ -140,9 +141,16 @@ button { font: inherit; color: inherit; }
 .set-h { margin: 14px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
 .msg-inline { margin: 8px 0 0; font-size: 13.5px; color: var(--up); }
 .btn-plain[hidden] { display: none; }
-.limit-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.limit-row input { flex: 1; min-width: 0; padding: 11px 12px; border: 0; border-radius: 12px; background: var(--track); color: var(--fg); font: inherit; font-variant-numeric: tabular-nums; }
-.limit-row .btn-plain { margin: 0; }
+.limit-pill { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 10px; border: 0; border-radius: 99px; background: var(--card); color: var(--fg); box-shadow: var(--shadow); font: inherit; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; }
+.limit-pill .pill-two { display: grid; text-align: left; line-height: 1.05; }
+.limit-pill .pill-two small { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .75; }
+.limit-pill.set { background: color-mix(in srgb, var(--accent) 18%, var(--card)); color: var(--accent); }
+.money-input { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 0 14px; min-height: 50px; }
+.money-input span { font-size: 18px; font-weight: 700; color: var(--muted); }
+.sheet .money-input input { flex: 1; min-width: 0; border: 0; background: none; padding: 13px 0; font-size: 20px; font-weight: 700; color: var(--fg); min-height: 0; }
+.money-input input:focus { outline: none; }
+.money-input:focus-within { border-color: var(--accent); }
+#limit-clear { margin: 0; }
 .set-limit { font-size: 13px; padding: 0; }
 
 .btn-plain { margin-top: 10px; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--track); font-weight: 600; cursor: pointer; }
@@ -159,7 +167,7 @@ button { font: inherit; color: inherit; }
 .setup .msg { margin: 0; }
 
 /* Add a payment */
-.top-actions { display: flex; gap: 10px; }
+.top-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .42); }
 .sheet { position: fixed; z-index: 21; left: 0; right: 0; bottom: 0; max-width: 34rem; margin-inline: auto; max-height: 92vh; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 12px; padding: 10px 20px max(22px, env(safe-area-inset-bottom)); background: var(--card); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .25); animation: rise .22s ease-out; }
 @keyframes rise { from { transform: translateY(24px); opacity: 0; } }
@@ -202,6 +210,10 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
       <p id="updated"></p>
     </div>
     <div class="top-actions">
+      <button type="button" class="limit-pill" id="limit-open" aria-label="Set a daily limit">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg>
+        <span id="limit-pill-text">Set limit</span>
+      </button>
       <button type="button" class="icon-btn" id="add-open" aria-label="Add a payment">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
@@ -277,15 +289,6 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
       <p class="msg-inline" id="alerts-note" hidden></p>
       <button type="button" class="btn-plain" id="alerts-on" hidden>Turn on alerts</button>
       <button type="button" class="btn-plain" id="alerts-off" hidden>Turn off alerts</button>
-      <h3 class="set-h">Daily limit</h3>
-      <p id="limit-text">Without a limit, the chart and alerts use your 14-day daily average.</p>
-      <div class="limit-row">
-        <span aria-hidden="true">$</span>
-        <input id="limit-input" type="number" inputmode="decimal" min="1" max="100000" step="1" placeholder="For example 30" aria-label="Daily limit in dollars">
-        <button type="button" class="btn-plain" id="limit-save">Save</button>
-      </div>
-      <button type="button" class="btn-plain" id="limit-clear" hidden>Use my average instead</button>
-      <p class="msg-inline" id="limit-note" hidden></p>
       <h3 class="set-h">This phone</h3>
       <p>The token that lets this app read your private spending repository, and a copy of your latest purchases so the app works offline, are saved only on this phone. Forgetting the token deletes that copy. Payments you add while offline stay on the phone until they send. It updates when you open it, every hour while it is open, or when you tap refresh.</p>
       <button type="button" class="btn-plain" id="forget">Forget the token on this phone</button>
@@ -295,6 +298,21 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
 </div>
 
 <div class="backdrop" id="add-backdrop" hidden></div>
+<div class="backdrop" id="limit-backdrop" hidden></div>
+<form class="sheet" id="limit-sheet" role="dialog" aria-modal="true" aria-labelledby="limit-title" hidden novalidate>
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="limit-title">Daily limit</h2>
+  <p class="sub" id="limit-text">Pick how much you want to spend a day. The chart, alerts and morning note will use it.</p>
+  <label class="field"><span>Amount per day</span>
+    <span class="money-input"><span aria-hidden="true">$</span><input id="limit-input" type="number" inputmode="decimal" min="1" max="100000" step="any" autocomplete="off" placeholder="30"></span>
+  </label>
+  <p class="msg" id="limit-note" hidden></p>
+  <div class="sheet-actions">
+    <button type="button" class="btn-plain" id="limit-cancel">Cancel</button>
+    <button type="submit" class="primary" id="limit-save">Save limit</button>
+  </div>
+  <button type="button" class="btn-plain" id="limit-clear" hidden>Remove limit and use my average</button>
+</form>
 <form class="sheet" id="add-sheet" role="dialog" aria-modal="true" aria-labelledby="add-title" hidden novalidate>
   <div class="grab" aria-hidden="true"></div>
   <h2 id="add-title">Add a payment</h2>
