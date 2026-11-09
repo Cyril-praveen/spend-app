@@ -2,10 +2,11 @@
 /*
  * Spending alerts. Runs inside a GitHub Action in the private data repo (spend-data).
  *
- *   issues (a new purchase)  -> work out today's total against the 14-day daily average and,
- *                               if it is over (or close), push an alert to every registered phone.
- *   schedule (nightly)       -> push the "check your spending" reminder with the day's total.
- *   workflow_dispatch        -> mode "summary" sends tonight's reminder now, "test" sends a test alert.
+ *   issues (a new purchase)  -> work out today's total against the daily limit (or, when none is set, the
+ *                               14-day daily average) and, if it is over or close, push an alert to every phone.
+ *   schedule (morning, 8 AM) -> push "you can spend $X today".
+ *   schedule (evening, 9 PM) -> push the "check your spending" reminder with the day's total.
+ *   workflow_dispatch        -> mode "summary" or "morning" sends that note now, "test" sends a test alert.
  *   push (workflow edited)   -> only makes sure the push keys exist.
  *
  * The numbers come from the same calcs.js and loader.js the app uses, so alerts always match the app:
@@ -26,7 +27,7 @@ const FIXTURE = process.env.SPEND_FIXTURE || '';
 const DRY = process.env.DRY_RUN === '1';
 const APP_DIR = path.join(__dirname, '..');
 const SITE = 'https://cyril-praveen.github.io/spend-app/';
-const LABELS = { 'push-key': '5319e7', 'push-device': '0e8a16', summary: 'fbca04' };
+const LABELS = { 'push-key': '5319e7', 'push-device': '0e8a16', summary: 'fbca04', settings: 'c5def5' };
 
 const cad = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' });
 const money = (v) => cad.format(v);
@@ -103,6 +104,19 @@ const getDevices = async () => {
   return [...byEndpoint.values()];
 };
 
+// The daily limit the person set in the app, kept in a closed issue labelled settings. 0 means none is set.
+const getLimit = async () => {
+  if (DRY) return Number(process.env.LIMIT || 0) || 0;
+  for (const i of await listByLabel('settings')) {
+    if (!/^settings: limit/.test(i.title || '')) continue;
+    try {
+      const v = Number(JSON.parse(i.body).dailyLimit);
+      return v > 0 ? v : 0;
+    } catch (e) { /* try the next one */ }
+  }
+  return 0;
+};
+
 const send = async (webpush, devices, message) => {
   if (DRY) {
     log('[dry run] would send to ' + devices.length + ' device(s):', JSON.stringify(message));
@@ -170,9 +184,13 @@ const todayKey = () => {
 const round2 = (v) => Math.round(v * 100) / 100;
 
 // ---- Messages -----------------------------------------------------------------------------------------------
+// What today is measured against: the limit if there is one, otherwise the 14-day daily average.
+const targetOf = (n, limit) => (limit > 0 ? { value: limit, word: 'daily limit' } : { value: n.kpi.per_day, word: 'daily average' });
+
 // Alert after a purchase. Returns null when there is nothing to say (still comfortably under the average).
-const alertFor = (n, issue) => {
-  const avg = n.kpi.per_day;
+const alertFor = (n, issue, limit) => {
+  const t = targetOf(n, limit);
+  const avg = t.value;
   if (!(avg > 0)) return null;
   const mine = String(issue.number);
   const row = n.spend.find((r) => r.period === 'now' && (r.id === mine || (r.dupIds || []).includes(mine)));
@@ -190,26 +208,27 @@ const alertFor = (n, issue) => {
     const over = money(round2(total - avg));
     const again = before > avg;
     return {
-      title: again ? 'Still over your daily average' : 'Over your daily average',
-      body: 'You have spent ' + money(total) + ' today, ' + over + ' over your ' + money(avg) + ' daily average. ' + latest
+      title: again ? 'Still over your ' + t.word : 'Over your ' + t.word,
+      body: 'You have spent ' + money(total) + ' today, ' + over + ' over your ' + money(avg) + ' ' + t.word + '. ' + latest
     };
   }
   if (total >= avg * 0.8 && before < avg * 0.8) {
     return {
-      title: 'Close to your daily average',
-      body: money(total) + ' spent today. Only ' + money(round2(avg - total)) + ' left before you pass your ' + money(avg) + ' daily average. ' + latest
+      title: 'Close to your ' + t.word,
+      body: money(total) + ' spent today. Only ' + money(round2(avg - total)) + ' left before you pass your ' + money(avg) + ' ' + t.word + '. ' + latest
     };
   }
   return null;
 };
 
 // The 9 PM reminder: the day's total and a nudge to open the app.
-const summaryFor = (n) => {
+const summaryFor = (n, limit) => {
   const today = todayKey();
-  const avg = n.kpi.per_day;
+  const t = targetOf(n, limit);
+  const avg = t.value;
   const rows = n.spend.filter((r) => r.period === 'now' && r.day === today && r.amount > 0);
   if (!rows.length) {
-    return { day: today, title: 'No spending logged today', body: 'Nothing came through today. Open the app to check, or add a payment by hand.' + (avg > 0 ? ' Your daily average is ' + money(avg) + '.' : '') };
+    return { day: today, title: 'No spending logged today', body: 'Nothing came through today. Open the app to check, or add a payment by hand.' + (avg > 0 ? ' Your ' + t.word + ' is ' + money(avg) + '.' : '') };
   }
   const total = round2(rows.reduce((s, r) => s + r.amount, 0));
   const biggest = rows.reduce((a, b) => (b.amount > a.amount ? b : a));
@@ -219,13 +238,33 @@ const summaryFor = (n) => {
   let vs = '';
   if (avg > 0) {
     const diff = round2(total - avg);
-    vs = diff > 0 ? ' That is ' + money(diff) + ' over your ' + money(avg) + ' daily average.' : ' That is ' + money(-diff) + ' under your ' + money(avg) + ' daily average.';
+    vs = diff > 0 ? ' That is ' + money(diff) + ' over your ' + money(avg) + ' ' + t.word + '.' : ' That is ' + money(-diff) + ' under your ' + money(avg) + ' ' + t.word + '.';
   }
   return {
     day: today,
     title: 'You spent ' + money(total) + ' today',
     body: rows.length + (rows.length === 1 ? ' purchase.' : ' purchases.') + vs + ' Biggest: ' + biggest.merchant + ' ' + money(biggest.amount) + '. Most went to ' + top[0] + '. Tap to check the app.'
   };
+};
+
+// The 8 AM note: what is left to spend today, and how yesterday went.
+const morningFor = (n, limit) => {
+  const today = todayKey();
+  const t = targetOf(n, limit);
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const p = (k) => (k < 10 ? '0' : '') + k;
+  const yesterday = y.getFullYear() + '-' + p(y.getMonth() + 1) + '-' + p(y.getDate());
+  const sum = (day) => round2(n.spend.filter((r) => r.period === 'now' && r.day === day && r.amount > 0).reduce((s, r) => s + r.amount, 0));
+  if (!(t.value > 0)) return { day: today, title: 'Good morning', body: 'Open the app to see how your spending is going.' };
+  const left = round2(Math.max(0, t.value - sum(today)));
+  const ySum = sum(yesterday);
+  let was = ' Nothing was logged yesterday.';
+  if (ySum > 0) {
+    const d = round2(ySum - t.value);
+    was = ' Yesterday: ' + money(ySum) + ', ' + money(Math.abs(d)) + (d > 0 ? ' over.' : ' under.');
+  }
+  return { day: today, title: 'You can spend ' + money(left) + ' today', body: 'That is your ' + t.word + '. Stay under it and you are on track.' + was };
 };
 
 // ---- Main ---------------------------------------------------------------------------------------------------
@@ -237,7 +276,7 @@ const summaryFor = (n) => {
   if (!mode) {
     if (eventName === 'issues') mode = 'issue';
     else if (eventName === 'schedule') mode = 'summary-scheduled';
-    else if (eventName === 'workflow_dispatch') mode = payload.inputs && payload.inputs.mode === 'test' ? 'test' : 'summary-now';
+    else if (eventName === 'workflow_dispatch') mode = { test: 'test', morning: 'morning-now' }[payload.inputs && payload.inputs.mode] || 'summary-now';
     else mode = 'bootstrap';
   }
   log('mode', mode);
@@ -261,45 +300,54 @@ const summaryFor = (n) => {
     if (labels.includes('push-device') || /^device:/.test(issue.title || '')) {
       try {
         const sub = JSON.parse(issue.body);
-        await send(webpush, [{ number: issue.number, sub }], note({ title: 'Spending alerts are on', body: 'You will hear from me when you go over your daily average, and again each night at 9.' }));
+        await send(webpush, [{ number: issue.number, sub }], note({ title: 'Spending alerts are on', body: 'You will get a note each morning with what you can spend, an alert when you go over your limit, and a reminder each night at 9.' }));
       } catch (e) { log('could not read the device entry'); }
       return;
     }
-    if (labels.some((l) => l in LABELS) || /^(push-key|summary|device-off)/.test(issue.title || '')) return;
+    if (labels.some((l) => l in LABELS) || /^(push-key|summary|device-off|settings)/.test(issue.title || '')) return;
     const n = await compute();
-    const msg = alertFor(n, issue);
+    const msg = alertFor(n, issue, await getLimit());
     log(msg ? 'alert: ' + msg.title : 'no alert needed');
     if (msg) await send(webpush, await getDevices(), note(msg));
     return;
   }
 
-  // Nightly reminder. Two cron times cover daylight saving; only the one that lands on 9 PM here sends.
-  const scheduled = mode === 'summary-scheduled';
+  // The morning and evening notes. Cron runs at both UTC hours that can mean 8 AM / 9 PM in Toronto (it changes with daylight
+  // saving), so the local hour decides which note this run is, and a saved "last sent" day stops a second copy.
+  const daily = async (kind, scheduled) => {
+    const title = kind === 'morning' ? 'summary: morning' : 'summary: latest';
+    const state = DRY ? [] : await listByLabel('summary');
+    const last = state.find((i) => (i.title || '').startsWith(title));
+    let lastDay = '';
+    try { lastDay = last ? JSON.parse(last.body).day : ''; } catch (e) { /* none */ }
+    if (scheduled && lastDay === todayKey()) {
+      log(kind + ' note already went out today');
+      return;
+    }
+    const n = await compute();
+    const limit = await getLimit();
+    const s = kind === 'morning' ? morningFor(n, limit) : summaryFor(n, limit);
+    await send(webpush, await getDevices(), note({ title: s.title, body: s.body }));
+    if (DRY) return;
+    // Keep the latest note where a Shortcut can read it too.
+    const body = JSON.stringify({ day: s.day, title: s.title, body: s.body, at: new Date().toISOString() });
+    if (last) {
+      await api('PATCH', '/issues/' + last.number, { body });
+    } else {
+      const c = await api('POST', '/issues', { title, body, labels: ['summary'] });
+      if (c.ok) await api('PATCH', '/issues/' + c.json.number, { state: 'closed' });
+    }
+  };
+
+  if (mode === 'morning-now') return daily('morning', false);
+  if (mode === 'summary-now') return daily('evening', false);
   const hour = new Date().getHours();
-  if (scheduled && (hour < 21 || hour > 23)) {
-    log('not evening in Toronto (hour ' + hour + '), nothing to do');
+  const kind = hour >= 8 && hour <= 10 ? 'morning' : hour >= 21 && hour <= 23 ? 'evening' : '';
+  if (!kind) {
+    log('not morning or evening in Toronto (hour ' + hour + '), nothing to do');
     return;
   }
-  const state = DRY ? [] : await listByLabel('summary');
-  const last = state.find((i) => /^summary: latest/.test(i.title || ''));
-  let lastDay = '';
-  try { lastDay = last ? JSON.parse(last.body).day : ''; } catch (e) { /* none */ }
-  if (scheduled && lastDay === todayKey()) {
-    log('tonight\'s reminder already went out');
-    return;
-  }
-  const n = await compute();
-  const s = summaryFor(n);
-  await send(webpush, await getDevices(), note({ title: s.title, body: s.body }));
-  if (DRY) return;
-  // Keep the latest summary where a Shortcut can read it too.
-  const body = JSON.stringify({ day: s.day, title: s.title, body: s.body, at: new Date().toISOString() });
-  if (last) {
-    await api('PATCH', '/issues/' + last.number, { body });
-  } else {
-    const c = await api('POST', '/issues', { title: 'summary: latest', body, labels: ['summary'] });
-    if (c.ok) await api('PATCH', '/issues/' + c.json.number, { state: 'closed' });
-  }
+  return daily(kind, true);
 })().catch((e) => {
   console.error('notifier failed:', e && e.message ? e.message : e);
   process.exit(1);

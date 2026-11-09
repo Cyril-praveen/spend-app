@@ -140,6 +140,11 @@ button { font: inherit; color: inherit; }
 .set-h { margin: 14px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
 .msg-inline { margin: 8px 0 0; font-size: 13.5px; color: var(--up); }
 .btn-plain[hidden] { display: none; }
+.limit-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.limit-row input { flex: 1; min-width: 0; padding: 11px 12px; border: 0; border-radius: 12px; background: var(--track); color: var(--fg); font: inherit; font-variant-numeric: tabular-nums; }
+.limit-row .btn-plain { margin: 0; }
+.set-limit { font-size: 13px; padding: 0; }
+
 .btn-plain { margin-top: 10px; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--track); font-weight: 600; cursor: pointer; }
 
 /* Setup */
@@ -265,13 +270,22 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
         <dd>Declined payments, test entries with no amount, and anything not paid with Apple Pay.</dd>
       </dl>
     </details>
-    <details>
+    <details id="settings-details">
       <summary>Alerts and settings</summary>
       <h3 class="set-h">Alerts</h3>
       <p id="alerts-text">Checking…</p>
       <p class="msg-inline" id="alerts-note" hidden></p>
       <button type="button" class="btn-plain" id="alerts-on" hidden>Turn on alerts</button>
       <button type="button" class="btn-plain" id="alerts-off" hidden>Turn off alerts</button>
+      <h3 class="set-h">Daily limit</h3>
+      <p id="limit-text">Without a limit, the chart and alerts use your 14-day daily average.</p>
+      <div class="limit-row">
+        <span aria-hidden="true">$</span>
+        <input id="limit-input" type="number" inputmode="decimal" min="1" max="100000" step="1" placeholder="For example 30" aria-label="Daily limit in dollars">
+        <button type="button" class="btn-plain" id="limit-save">Save</button>
+      </div>
+      <button type="button" class="btn-plain" id="limit-clear" hidden>Use my average instead</button>
+      <p class="msg-inline" id="limit-note" hidden></p>
       <h3 class="set-h">This phone</h3>
       <p>The token that lets this app read your private spending repository, and a copy of your latest purchases so the app works offline, are saved only on this phone. Forgetting the token deletes that copy. Payments you add while offline stay on the phone until they send. It updates when you open it, every hour while it is open, or when you tap refresh.</p>
       <button type="button" class="btn-plain" id="forget">Forget the token on this phone</button>
@@ -320,5 +334,6 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
 <script src="main.js"></script>
 <script src="add.js"></script>
 <script src="push.js"></script>
+<script src="settings.js"></script>
 </body>
 </html>

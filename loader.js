@@ -115,7 +115,7 @@
   window.spendQueue = queue;
 
   // Issues the alert job keeps for itself (push keys, saved phones, the latest summary) are not purchases.
-  const bookkeeping = (i) => (i.labels || []).some((l) => /^(push-key|push-device|summary)$/.test(l && l.name)) || /^(push-key|device|device-off|summary):?/.test(String(i.title || ''));
+  const bookkeeping = (i) => (i.labels || []).some((l) => /^(push-key|push-device|summary|settings)$/.test(l && l.name)) || /^(push-key|device|device-off|summary|settings):?/.test(String(i.title || ''));
 
   const fetchIssues = async (token, repo, now) => {
     const day = 86400000;

@@ -1,5 +1,5 @@
-const CACHE = 'spend-v5';
-const ASSETS = ['./', './index.html', './runtime.js', './calcs.js', './app.js', './loader.js', './main.js', './add.js', './push.js', './vendor/d3.min.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'spend-v6';
+const ASSETS = ['./', './index.html', './runtime.js', './calcs.js', './app.js', './loader.js', './main.js', './add.js', './push.js', './settings.js', './vendor/d3.min.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

@@ -131,7 +131,11 @@
     const data = rowsOf('by_day');
     const byDay = new Map(data.map((r) => [r.day, r]));
     const kpi = kpiRow();
-    const avg = kpi && typeof kpi.per_day === 'number' && kpi.per_day > 0 ? kpi.per_day : 0;
+    // The line to stay under: the limit set in Settings, or else the 14-day daily average.
+    const limit = typeof window.spendLimit === 'number' && window.spendLimit > 0 ? window.spendLimit : 0;
+    const average = kpi && typeof kpi.per_day === 'number' && kpi.per_day > 0 ? kpi.per_day : 0;
+    const avg = limit || average;
+    const word = limit ? 'daily limit' : 'daily average';
     const today = d3.timeDay.floor(new Date());
     let first = d3.timeDay.offset(today, -14);
     let last = today;
@@ -150,8 +154,12 @@
       const note = h('div', 'avg-note ' + (left >= 0 ? 'under' : 'over'));
       note.append(
         h('span', 'avg-big', left >= 0 ? money(left) + ' left today' : money(-left) + ' over today'),
-        h('span', 'avg-small', (spent > 0 ? money(spent) + ' spent so far' : 'Nothing spent yet') + ' · ' + money(avg) + ' daily average')
+        h('span', 'avg-small', (spent > 0 ? money(spent) + ' spent so far' : 'Nothing spent yet') + ' · ' + money(avg) + ' ' + word)
       );
+      const edit = h('button', 'link set-limit', limit ? 'Change limit' : 'Set your own limit');
+      edit.type = 'button';
+      edit.addEventListener('click', () => window.spendOpenLimit && window.spendOpenLimit());
+      note.append(edit);
       el.append(note);
     }
 
@@ -165,7 +173,7 @@
     const x = d3.scalePoint(days.map(dayKey), [10, plotEnd - 4]);
     const px = (d) => x(dayKey(d));
     const svg = d3.select(el).append('svg').attr('class', 'line-svg').attr('width', '100%').attr('viewBox', '0 0 ' + W + ' ' + H).attr('role', 'img')
-      .attr('aria-label', 'Spending for each of the last two weeks' + (avg > 0 ? ', with the daily average of ' + money(avg) : ''));
+      .attr('aria-label', 'Spending for each of the last two weeks' + (avg > 0 ? ', with the ' + word + ' of ' + money(avg) : ''));
 
     const grad = svg.append('defs').append('linearGradient').attr('id', 'sp-area').attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
     grad.append('stop').attr('offset', '0%').attr('class', 'grad-top');
@@ -182,7 +190,7 @@
       svg.append('line').attr('class', 'avg-line').attr('x1', 0).attr('x2', plotEnd).attr('y1', ay).attr('y2', ay);
       // The label sits in the strip at the end of the dashed line, clear of the data.
       const ly = Math.min(ay, y(0) - 12);
-      svg.append('text').attr('class', 'avg-label').attr('x', plotEnd + 5).attr('y', ly - 3).text('Daily avg');
+      svg.append('text').attr('class', 'avg-label').attr('x', plotEnd + 5).attr('y', ly - 3).text(limit ? 'Your limit' : 'Daily avg');
       svg.append('text').attr('class', 'avg-label avg-amt').attr('x', plotEnd + 5).attr('y', ly + 11).text(money(avg));
     }
 
@@ -203,7 +211,7 @@
       if (scrub) {
         const diff = avg > 0 ? amountOf(d) - avg : 0;
         scrub.textContent = dayLong(d) + ' · ' + (rec ? money(rec.amount) + ' · ' + rec.count + (rec.count === 1 ? ' purchase' : ' purchases') : 'no spending') +
-          (avg > 0 ? ' · ' + money(Math.abs(diff)) + (diff <= 0 ? ' under' : ' over') + ' avg' : '');
+          (avg > 0 ? ' · ' + money(Math.abs(diff)) + (diff <= 0 ? ' under' : ' over') + (limit ? ' limit' : ' avg') : '');
       }
       guide.attr('x1', px(d)).attr('x2', px(d)).attr('visibility', 'visible');
       dots.attr('r', (p) => (p === d ? radius(p) + 2 : radius(p)));

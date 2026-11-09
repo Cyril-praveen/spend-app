@@ -28,6 +28,9 @@
     return fetch('https://api.github.com/repos/' + repo + p, { method, headers: headers(read(KEY_TOKEN)), body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
   };
 
+  // The page's service worker can take a moment to be ready, or never be (if it could not register). Do not wait forever.
+  const ready = () => Promise.race([navigator.serviceWorker.ready, new Promise((_, no) => setTimeout(() => no(new Error('no worker')), 4000))]);
+
   const bytes = (b64url) => {
     const pad = '='.repeat((4 - (b64url.length % 4)) % 4);
     const raw = atob((b64url + pad).split('-').join('+').split('_').join('/'));
@@ -77,7 +80,7 @@
     off.hidden = true;
     note.hidden = !message;
     note.textContent = message;
-    const idle = 'You get a note right after a purchase when today\'s spending is over your daily average, and a reminder each night at 9.';
+    const idle = 'A note each morning with what you can spend, an alert right after a purchase that puts you over your daily limit, and a reminder each night at 9.';
     if (!capable() || (onIOS && !installed())) {
       text.textContent = 'Alerts need this app on your Home Screen. In Safari tap Share, then Add to Home Screen, and open it from the new icon.';
       return;
@@ -89,7 +92,7 @@
     const mine = device();
     let sub = null;
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await ready();
       sub = await reg.pushManager.getSubscription();
     } catch (e) { /* no worker yet */ }
     if (mine && sub && Notification.permission === 'granted') {
@@ -125,7 +128,7 @@
         message = 'Alerts are not ready on GitHub yet. Give it a minute and try again.';
         return;
       }
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await ready();
       let sub = await reg.pushManager.getSubscription();
       const want = bytes(key);
       if (sub && sub.options && sub.options.applicationServerKey) {
@@ -152,7 +155,7 @@
     message = '';
     busy = true;
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await ready();
       const sub = await reg.pushManager.getSubscription();
       if (sub) await sub.unsubscribe();
       const mine = device();
@@ -172,7 +175,7 @@
   const resync = async () => {
     if (!read(KEY_TOKEN) || !capable() || Notification.permission !== 'granted' || !device()) return;
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await ready();
       const sub = await reg.pushManager.getSubscription();
       if (sub && sub.endpoint !== device().endpoint) await registerDevice(sub);
     } catch (e) { /* try again next time the app opens */ }
